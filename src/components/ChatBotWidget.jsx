@@ -34,12 +34,12 @@ export default function ChatBotWidget({ whatsappNumber = "+919876543210" }) {
     let customWhatsAppCta = null;
 
     try {
-      // 1. Attempt live call to Python FastAPI RAG backend
-      const response = await fetch('http://127.0.0.1:8000/api/chat', {
+      // 1. Attempt live call to RAG backend (proxied locally, direct on Vercel)
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: queryText, language: 'en' }),
-        signal: AbortSignal.timeout(3000) // 3s timeout
+        signal: AbortSignal.timeout(4000) // 4s timeout
       });
 
       if (response.ok) {
