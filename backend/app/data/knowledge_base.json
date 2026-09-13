@@ -1,0 +1,51 @@
+[
+  {
+    "id": "farm-origin",
+    "topic": "farm_origin",
+    "keywords": ["farm", "origin", "location", "godavari", "hygiene", "organic", "sterilization", "where"],
+    "title": "Godavari Grown Farm Location & Purity Benchmark",
+    "content": "Godavari Grown is located in the fertile Godavari delta basin along the NH-16 corridor in Andhra Pradesh. We operate a high-tech vertical climate-controlled facility with 88-92% relative humidity. We use 100% organic local paddy straw sterilized via 4-hour 85°C steam. We use zero chemical pesticides, zero synthetic sprays, and zero bleach washes. All produce is certified FSSAI compliant with Below Detectable Limit (BDL) heavy metals."
+  },
+  {
+    "id": "varieties-overview",
+    "topic": "products",
+    "keywords": ["varieties", "types", "mushrooms", "milky", "oyster", "button", "lion's mane", "cordyceps"],
+    "title": "Cultivated Mushroom Varieties",
+    "content": "Godavari Grown harvests five primary varieties: 1) Godavari Milky White (Calocybe indica) - firm, meaty, excellent for South Indian curries and biryanis, 5 days shelf life. 2) Pearl and Blue Oyster (Pleurotus ostreatus) - delicate umami, natural lovastatin, cooks in 3 minutes. 3) Classic White Button (Agaricus bisporus) - tender and crisp. 4) Pure Lion's Mane (Hericium erinaceus) - brain vitality and focus superfood extract. 5) Dried Golden Cordyceps militaris - athletic stamina and ATP energy."
+  },
+  {
+    "id": "pricing-fresh",
+    "topic": "pricing",
+    "keywords": ["price", "cost", "rate", "how much", "charges", "milky price", "oyster price"],
+    "title": "Fresh Mushroom Retail Pricing",
+    "content": "Retail rates per pack: 1) Fresh Milky White: ₹45 for 200g, ₹105 for 500g, ₹199 for 1kg. 2) Pearl Oyster: ₹50 for 200g, ₹115 for 500g, ₹215 for 1kg. 3) White Button: ₹55 for 200g, ₹125 for 500g, ₹235 for 1kg. 4) DIY Oyster Grow Kit: ₹499 (includes glass mister). 5) Pure Lion's Mane Extract: ₹799 (100g jar). Launch offer coupon code GODAVARIFRESH provides 20% discount on first orders."
+  },
+  {
+    "id": "delivery-coverage",
+    "topic": "logistics",
+    "keywords": ["delivery", "pincode", "east godavari", "west godavari", "kakinada", "rajahmundry", "eluru", "bhimavaram", "tanuku", "palakollu", "shipping", "all india"],
+    "title": "Delivery Regions & Turnaround Times",
+    "content": "Fresh Culinary Mushrooms are delivered within 24 hours of morning harvest across East Godavari and West Godavari districts (including Kakinada, Rajahmundry, Eluru, Bhimavaram, Tanuku, Tadepalligudem, Palakollu, and Amalapuram). For DIY Grow Kits, Dried Oyster Flakes, and Lion's Mane extracts, we offer Pan-India express courier shipping delivered in 3 to 5 business days."
+  },
+  {
+    "id": "wholesale-b2b",
+    "topic": "wholesale",
+    "keywords": ["wholesale", "b2b", "bulk", "restaurant", "hotel", "supermarket", "horeca", "discount", "crate"],
+    "title": "Commercial B2B & Wholesale Supply",
+    "content": "We supply hotels, restaurants, biryani kitchens, and supermarkets in 5kg, 10kg, and 25kg commercial cold-crates. Tiered discounts range from 20% to 35% off retail. Guaranteed morning delivery slot at 7:00 AM. Commercial inquiries can be submitted via the B2B form or sent directly to our WhatsApp commercial desk (+91 98765 43210)."
+  },
+  {
+    "id": "diy-grow-kit-care",
+    "topic": "grow_kit",
+    "keywords": ["kit", "grow kit", "how to grow", "diy", "instructions", "misting", "harvest"],
+    "title": "DIY Oyster Mushroom Home Grow Kit Guide",
+    "content": "To grow mushrooms at home: 1) Cut a 2-inch 'X' slit on the front of the cardboard box. 2) Spray 4-5 spritzes of clean water using the provided mister bottle, 2 to 3 times a day. 3) Keep in a cool, well-ventilated spot away from direct sunlight. 4) Baby pinheads appear in 7 days, and full mushroom clusters will bloom in 10-14 days. 5) Gently twist off at the base to harvest. The kit yields 2 to 3 flushes with a 10-day rest period between flushes."
+  },
+  {
+    "id": "storage-and-shelf-life",
+    "topic": "storage",
+    "keywords": ["store", "storage", "fridge", "refrigerator", "shelf life", "how to keep", "spoil"],
+    "title": "Storage & Freshness Guidelines",
+    "content": "Store fresh mushrooms in the refrigerator vegetable drawer at 3°C to 6°C in our breathable micro-perforated packaging or a paper bag. Do NOT wash mushrooms before storing as moisture causes brown browning; simply rinse or dry brush right before cooking. Milky mushrooms have a shelf life of up to 5 days, Oyster mushrooms 3 to 4 days, and White Button 4 to 5 days."
+  }
+]

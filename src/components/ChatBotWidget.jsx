@@ -25,25 +25,43 @@ export default function ChatBotWidget({ whatsappNumber = "+919876543210" }) {
     }
   }, [messages, isOpen]);
 
-  // Answer matching logic (RAG-ready interface)
+  // Answer matching logic (Connected to FastAPI RAG Backend with graceful fallback)
   const processQuery = async (queryText) => {
     setIsTyping(true);
 
-    // Simulated short latency for natural feel
-    await new Promise((res) => setTimeout(res, 500));
-
-    const lower = queryText.toLowerCase();
-
-    // Match against QA knowledge base
-    const matched = CHATBOT_QA.find((item) =>
-      item.triggers.some((trig) => lower.includes(trig))
-    );
-
     let answerText = "";
-    if (matched) {
-      answerText = matched.answer;
-    } else {
-      answerText = `Thank you for asking about "${queryText}". Our farm team harvests daily in the Godavari basin. For real-time stock availability, large custom crates, or pincode confirmation, you can chat directly with our growers on WhatsApp!`;
+    let sources = [];
+    let customWhatsAppCta = null;
+
+    try {
+      // 1. Attempt live call to Python FastAPI RAG backend
+      const response = await fetch('http://127.0.0.1:8000/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: queryText, language: 'en' }),
+        signal: AbortSignal.timeout(3000) // 3s timeout
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        answerText = data.reply;
+        sources = data.sources || [];
+        customWhatsAppCta = data.whatsapp_cta;
+      } else {
+        throw new Error('Backend returned non-200');
+      }
+    } catch (err) {
+      // 2. Seamless local fallback if backend is offline or loading
+      const lower = queryText.toLowerCase();
+      const matched = CHATBOT_QA.find((item) =>
+        item.triggers.some((trig) => lower.includes(trig))
+      );
+
+      if (matched) {
+        answerText = matched.answer;
+      } else {
+        answerText = `Thank you for asking about "${queryText}". Our farm team harvests daily in the Godavari basin. For real-time stock availability, large custom crates, or pincode confirmation, you can chat directly with our growers on WhatsApp!`;
+      }
     }
 
     setMessages((prev) => [
@@ -52,6 +70,7 @@ export default function ChatBotWidget({ whatsappNumber = "+919876543210" }) {
         id: Date.now(),
         sender: 'bot',
         text: answerText,
+        sources: sources,
         showWhatsAppHandoff: true,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }

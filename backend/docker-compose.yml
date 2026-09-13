@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: godavari_grown_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - PORT=8000
+      - DATABASE_URL=postgresql://postgres:postgres_secure_pass@db:5432/godavari_grown
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: godavari_grown_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_secure_pass
+      POSTGRES_DB: godavari_grown
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:
