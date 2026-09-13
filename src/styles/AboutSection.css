@@ -1,0 +1,213 @@
+.about-section {
+  padding: 80px 0;
+  background: var(--bg-cream);
+  position: relative;
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  align-items: center;
+}
+
+/* Text Card matching sketch "ABOUT US" + "Know more" */
+.about-card {
+  background: #ffffff;
+  padding: 44px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
+  position: relative;
+}
+
+.about-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 36px;
+  width: 60px;
+  height: 4px;
+  background: var(--primary-600);
+  border-radius: var(--radius-full);
+}
+
+.about-tag {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--primary-600);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: inline-block;
+}
+
+.about-title {
+  font-size: 2.2rem;
+  color: var(--primary-900);
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.about-description {
+  color: var(--text-muted);
+  font-size: 1.02rem;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.about-pillars {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.pillar-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.pillar-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary-100);
+  color: var(--primary-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pillar-title {
+  font-weight: 700;
+  font-size: 0.96rem;
+  color: var(--primary-900);
+  margin-bottom: 2px;
+}
+
+.pillar-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Image Card matching sketch "IMAGE related to GG" */
+.about-image-wrapper {
+  position: relative;
+}
+
+.about-main-img {
+  width: 100%;
+  height: 480px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 4px solid #ffffff;
+}
+
+.floating-stat-badge {
+  position: absolute;
+  bottom: -24px;
+  left: 24px;
+  background: #ffffff;
+  padding: 16px 22px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.floating-stat-num {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary-600);
+  line-height: 1;
+}
+
+.floating-stat-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.floating-purity-badge {
+  position: absolute;
+  top: 24px;
+  right: -18px;
+  background: linear-gradient(135deg, var(--primary-700), var(--primary-900));
+  color: #ffffff;
+  padding: 12px 18px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .about-section {
+    padding: 50px 0;
+  }
+  .about-grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .about-card {
+    padding: 30px 24px;
+  }
+  .about-main-img {
+    height: 380px;
+  }
+  .floating-purity-badge {
+    right: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .about-section {
+    padding: 40px 0;
+  }
+  .about-card {
+    padding: 24px 16px;
+  }
+  .about-title {
+    font-size: 1.6rem;
+    margin-bottom: 14px;
+  }
+  .about-description {
+    font-size: 0.92rem;
+    margin-bottom: 18px;
+  }
+  .about-main-img {
+    height: 280px;
+  }
+  .floating-purity-badge {
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    font-size: 0.74rem;
+  }
+  .floating-stat-badge {
+    bottom: 10px;
+    left: 10px;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .floating-stat-num {
+    font-size: 1.45rem;
+  }
+  .floating-stat-label {
+    font-size: 0.72rem;
+  }
+}

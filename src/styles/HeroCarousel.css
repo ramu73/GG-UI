@@ -1,0 +1,308 @@
+.hero-carousel-section {
+  position: relative;
+  padding: 24px 0 40px;
+  overflow: hidden;
+}
+
+.carousel-container {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  background: var(--primary-900);
+}
+
+.carousel-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(1.02);
+}
+
+.carousel-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+/* Background image & gradient overlay */
+.slide-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.05);
+  transition: transform 6s ease-out;
+}
+
+.carousel-slide.active .slide-bg {
+  transform: scale(1);
+}
+
+.slide-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 32, 20, 0.94) 0%,
+    rgba(10, 32, 20, 0.85) 45%,
+    rgba(10, 32, 20, 0.4) 100%
+  );
+}
+
+/* Slide Content */
+.slide-content {
+  position: relative;
+  z-index: 10;
+  max-width: 680px;
+  padding: 60px 50px;
+  color: #ffffff;
+}
+
+.slide-tag {
+  display: inline-block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #86efac;
+  background: rgba(46, 128, 85, 0.35);
+  border: 1px solid rgba(134, 239, 172, 0.3);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  margin-bottom: 20px;
+  backdrop-filter: blur(8px);
+}
+
+.slide-tag.tag-amber {
+  color: #fde68a;
+  background: rgba(217, 119, 6, 0.3);
+  border-color: rgba(253, 230, 138, 0.4);
+}
+
+.slide-tag.tag-gold {
+  color: #fef08a;
+  background: rgba(197, 155, 39, 0.3);
+  border-color: rgba(254, 240, 138, 0.4);
+}
+
+.slide-title {
+  font-size: 2.85rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.15;
+  margin-bottom: 18px;
+  letter-spacing: -1px;
+}
+
+.slide-subtitle {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #d1fae5;
+  margin-bottom: 26px;
+}
+
+.slide-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.highlight-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  color: #f0fdf4;
+  backdrop-filter: blur(6px);
+}
+
+/* Certifications Pill Grid on Slide 2 */
+.slide-badges-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.slide-badge-card {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
+}
+
+.slide-badge-name {
+  font-weight: 700;
+  color: #fef08a;
+  font-size: 0.95rem;
+}
+
+.slide-badge-desc {
+  font-size: 0.8rem;
+  color: #e2f5ec;
+}
+
+/* Arrow Navigation matching sketch < and > */
+.carousel-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition: var(--transition-fast);
+}
+
+.carousel-nav-btn:hover {
+  background: #ffffff;
+  color: var(--primary-900);
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.carousel-nav-prev {
+  left: 20px;
+}
+
+.carousel-nav-next {
+  right: 20px;
+}
+
+/* Dots / Indicators */
+.carousel-indicators {
+  position: absolute;
+  bottom: 24px;
+  left: 50px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transition: var(--transition-fast);
+}
+
+.carousel-dot.active {
+  width: 32px;
+  border-radius: var(--radius-full);
+  background: #4ade80;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .slide-title {
+    font-size: 2.1rem;
+  }
+  .slide-content {
+    padding: 40px 24px 60px;
+  }
+  .carousel-container {
+    min-height: 500px;
+  }
+  .carousel-nav-btn {
+    width: 42px;
+    height: 42px;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-carousel-section {
+    padding: 12px 0 28px;
+  }
+  .carousel-container {
+    min-height: 520px;
+    border-radius: var(--radius-md);
+  }
+  .slide-content {
+    padding: 28px 16px 75px;
+  }
+  .slide-tag {
+    font-size: 0.72rem;
+    padding: 4px 10px;
+    margin-bottom: 12px;
+  }
+  .slide-title {
+    font-size: 1.6rem;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .slide-subtitle {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin-bottom: 18px;
+  }
+  .slide-badges-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .slide-badge-card {
+    padding: 10px 12px;
+  }
+  .slide-highlights {
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .highlight-chip {
+    font-size: 0.78rem;
+    padding: 5px 10px;
+  }
+  /* Reposition arrow controls to bottom right on mobile so they don't block text */
+  .carousel-nav-btn {
+    top: auto;
+    bottom: 18px;
+    transform: none;
+    width: 36px;
+    height: 36px;
+  }
+  .carousel-nav-btn:hover {
+    transform: scale(1.05);
+  }
+  .carousel-nav-prev {
+    left: auto;
+    right: 58px;
+  }
+  .carousel-nav-next {
+    right: 16px;
+  }
+  .carousel-indicators {
+    left: 16px;
+    bottom: 24px;
+    gap: 6px;
+  }
+  .carousel-dot {
+    width: 8px;
+    height: 8px;
+  }
+  .carousel-dot.active {
+    width: 22px;
+  }
+}
