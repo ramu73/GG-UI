@@ -91,11 +91,14 @@ const COMMON_SOURCES = [
   { name: "Bangalore Wholesale Mandi", distance: 680 },
   { name: "Hyderabad Wholesale Market", distance: 420 },
   { name: "Vijayawada Wholesale Hub", distance: 150 },
+  { name: "Rajahmundry / Kakinada Local Mandi", distance: 40 },
   { name: "Ooty / Nilgiris Cold Supply", distance: 820 },
   { name: "Nashik / Pune Mandi", distance: 950 },
+  { name: "Guntur Wholesale Yard", distance: 180 },
+  { name: "Vizag Wholesale Market", distance: 160 },
   { name: "Local Small Cultivators / Farms", distance: 30 },
   { name: "Local Intermediary / Commission Agent", distance: 60 },
-  { name: "Other / Direct Interstate Truck", distance: 500 }
+  { name: "Direct Interstate Truck / Trader", distance: 500 }
 ];
 
 const PRODUCT_SUGGESTIONS = [
@@ -149,6 +152,8 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
   const [submittedItem, setSubmittedItem] = useState(null);
   const [selectedTownOption, setSelectedTownOption] = useState('Kakinada');
   const [customTownName, setCustomTownName] = useState('');
+  const [selectedSourceOption, setSelectedSourceOption] = useState('Bangalore Wholesale Mandi');
+  const [customSourceName, setCustomSourceName] = useState('');
 
   const handleTownChange = (e) => {
     const val = e.target.value;
@@ -186,11 +191,30 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
   };
 
   const handleSourceChange = (e) => {
-    const selectedSource = COMMON_SOURCES.find(s => s.name === e.target.value);
+    const val = e.target.value;
+    setSelectedSourceOption(val);
+
+    if (val === 'Other') {
+      setFormData(prev => ({
+        ...prev,
+        source_location: customSourceName.trim() || 'Other Source',
+        source_distance_km: 100
+      }));
+    } else {
+      const selectedSource = COMMON_SOURCES.find(s => s.name === val);
+      setFormData(prev => ({
+        ...prev,
+        source_location: val,
+        source_distance_km: selectedSource ? selectedSource.distance : prev.source_distance_km
+      }));
+    }
+  };
+
+  const handleCustomSourceChange = (sourceName) => {
+    setCustomSourceName(sourceName);
     setFormData(prev => ({
       ...prev,
-      source_location: e.target.value,
-      source_distance_km: selectedSource ? selectedSource.distance : prev.source_distance_km
+      source_location: sourceName
     }));
   };
 
@@ -242,9 +266,15 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
     e.preventDefault();
 
     const targetTown = selectedTownOption === 'Other' ? customTownName.trim() : formData.destination_area;
+    const targetSource = selectedSourceOption === 'Other' ? customSourceName.trim() : formData.source_location;
 
     if (!targetTown) {
       alert("Please specify the Destination Town / City name.");
+      return;
+    }
+
+    if (!targetSource) {
+      alert("Please specify where the vendor is buying from (Source Origin).");
       return;
     }
 
@@ -257,7 +287,8 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
     try {
       const submissionData = {
         ...formData,
-        destination_area: targetTown
+        destination_area: targetTown,
+        source_location: targetSource
       };
       const result = await submitSurvey(submissionData);
       setSubmittedItem(result);
@@ -274,6 +305,8 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
     setSubmittedItem(null);
     setSelectedTownOption('Kakinada');
     setCustomTownName('');
+    setSelectedSourceOption('Bangalore Wholesale Mandi');
+    setCustomSourceName('');
     setFormData(prev => ({
       ...prev,
       vendor_name: '',
@@ -282,6 +315,8 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
       destination_area: 'Kakinada',
       district: 'Kakinada / East Godavari',
       pincode: '533001',
+      source_location: 'Bangalore Wholesale Mandi',
+      source_distance_km: 680,
       selling_volume_kg: '',
       buying_price_per_kg: '',
       selling_price_per_kg: '',
@@ -596,13 +631,33 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
             <label className="form-label">Where is he buying from? (Source Origin) *</label>
             <select
               className="form-select"
-              value={formData.source_location}
+              value={selectedSourceOption}
               onChange={handleSourceChange}
             >
               {COMMON_SOURCES.map(s => (
                 <option key={s.name} value={s.name}>{s.name} (~{s.distance} km)</option>
               ))}
+              <option value="Other">➕ Other / Custom Sourcing Location</option>
             </select>
+
+            {/* Extra input box shown when Other is selected */}
+            {selectedSourceOption === 'Other' && (
+              <div style={{ marginTop: '10px' }}>
+                <label className="form-label" style={{ color: 'var(--primary-700)', fontWeight: 700 }}>
+                  ✏️ Enter Custom Sourcing Origin *
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Type sourcing origin (e.g., Kakinada Port Market, Local Rythu Bazaar, Specific Mandi)"
+                  value={customSourceName}
+                  onChange={(e) => handleCustomSourceChange(e.target.value)}
+                  required
+                  autoFocus
+                  style={{ borderColor: 'var(--primary-600)', background: '#f0fbf5' }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="form-group">
