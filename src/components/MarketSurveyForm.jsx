@@ -13,19 +13,78 @@ import {
 } from 'lucide-react';
 import { submitSurvey, computeMonthlyVolume } from '../data/surveyService';
 
-const GODAVARI_TOWNS = [
-  { name: "Kakinada", district: "East Godavari", pincode: "533001" },
-  { name: "Rajahmundry", district: "East Godavari", pincode: "533101" },
-  { name: "Bhimavaram", district: "West Godavari", pincode: "534201" },
-  { name: "Eluru", district: "West Godavari", pincode: "534001" },
-  { name: "Tanuku", district: "West Godavari", pincode: "534211" },
-  { name: "Tadepalligudem", district: "West Godavari", pincode: "534101" },
-  { name: "Palakollu", district: "West Godavari", pincode: "534260" },
-  { name: "Amalapuram", district: "East Godavari", pincode: "533201" },
-  { name: "Samalkota", district: "East Godavari", pincode: "533440" },
-  { name: "Vijayawada", district: "Krishna", pincode: "520001" },
-  { name: "Visakhapatnam", district: "Visakhapatnam", pincode: "530002" },
-  { name: "Guntur", district: "Guntur", pincode: "522002" }
+const REGIONAL_TOWNS = [
+  // 1. East Godavari, Kakinada & Konaseema
+  { name: "Kakinada", district: "Kakinada / East Godavari", pincode: "533001", region: "🌾 East Godavari & Konaseema" },
+  { name: "Rajahmundry", district: "East Godavari", pincode: "533101", region: "🌾 East Godavari & Konaseema" },
+  { name: "Amalapuram", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533201", region: "🌾 East Godavari & Konaseema" },
+  { name: "Samalkota", district: "Kakinada", pincode: "533440", region: "🌾 East Godavari & Konaseema" },
+  { name: "Mandapeta", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533308", region: "🌾 East Godavari & Konaseema" },
+  { name: "Peddapuram", district: "Kakinada", pincode: "533437", region: "🌾 East Godavari & Konaseema" },
+  { name: "Pithapuram", district: "Kakinada", pincode: "533450", region: "🌾 East Godavari & Konaseema" },
+  { name: "Ramachandrapuram", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533255", region: "🌾 East Godavari & Konaseema" },
+  { name: "Tuni", district: "Kakinada", pincode: "533401", region: "🌾 East Godavari & Konaseema" },
+  { name: "Ravulapalem", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533238", region: "🌾 East Godavari & Konaseema" },
+  { name: "Razole", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533242", region: "🌾 East Godavari & Konaseema" },
+  { name: "Anaparthi", district: "East Godavari", pincode: "533342", region: "🌾 East Godavari & Konaseema" },
+  { name: "Mummidivaram", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533216", region: "🌾 East Godavari & Konaseema" },
+  { name: "Kothapeta", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533223", region: "🌾 East Godavari & Konaseema" },
+  { name: "Yanam", district: "Puducherry Enclave", pincode: "533464", region: "🌾 East Godavari & Konaseema" },
+
+  // 2. West Godavari & Eluru
+  { name: "Bhimavaram", district: "West Godavari", pincode: "534201", region: "🌿 West Godavari & Eluru" },
+  { name: "Eluru", district: "Eluru", pincode: "534001", region: "🌿 West Godavari & Eluru" },
+  { name: "Tanuku", district: "West Godavari", pincode: "534211", region: "🌿 West Godavari & Eluru" },
+  { name: "Tadepalligudem", district: "West Godavari", pincode: "534101", region: "🌿 West Godavari & Eluru" },
+  { name: "Palakollu", district: "West Godavari", pincode: "534260", region: "🌿 West Godavari & Eluru" },
+  { name: "Narsapur", district: "West Godavari", pincode: "534275", region: "🌿 West Godavari & Eluru" },
+  { name: "Nidadavole", district: "East Godavari", pincode: "534301", region: "🌿 West Godavari & Eluru" },
+  { name: "Kovvur", district: "East Godavari", pincode: "534350", region: "🌿 West Godavari & Eluru" },
+  { name: "Jangareddygudem", district: "Eluru", pincode: "534447", region: "🌿 West Godavari & Eluru" },
+  { name: "Akividu", district: "West Godavari", pincode: "534235", region: "🌿 West Godavari & Eluru" },
+  { name: "Chintalapudi", district: "Eluru", pincode: "534460", region: "🌿 West Godavari & Eluru" },
+  { name: "Attili", district: "West Godavari", pincode: "534134", region: "🌿 West Godavari & Eluru" },
+
+  // 3. Rest of Andhra Pradesh Hubs
+  { name: "Vijayawada", district: "NTR / Krishna", pincode: "520001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Visakhapatnam (Vizag)", district: "Visakhapatnam", pincode: "530002", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Guntur", district: "Guntur", pincode: "522002", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Tirupati", district: "Tirupati", pincode: "517501", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Nellore", district: "SPSR Nellore", pincode: "524001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Kurnool", district: "Kurnool", pincode: "518001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Kadapa", district: "YSR Kadapa", pincode: "516001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Anantapur", district: "Anantapur", pincode: "515001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Ongole", district: "Prakasam", pincode: "523001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Vizianagaram", district: "Vizianagaram", pincode: "535002", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Srikakulam", district: "Srikakulam", pincode: "532001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Machilipatnam", district: "Krishna", pincode: "521001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Tenali", district: "Guntur", pincode: "522201", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Mangalagiri", district: "Guntur", pincode: "522503", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Gudivada", district: "Krishna", pincode: "521301", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Chittoor", district: "Chittoor", pincode: "517001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Madanapalle", district: "Annamayya", pincode: "517325", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Nandyal", district: "Nandyal", pincode: "518501", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Hindupur", district: "Sri Sathya Sai", pincode: "515201", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Proddatur", district: "YSR Kadapa", pincode: "516360", region: "🏙️ Andhra Pradesh Cities" },
+
+  // 4. Telangana Hubs
+  { name: "Hyderabad", district: "Hyderabad", pincode: "500001", region: "🌆 Telangana Hubs" },
+  { name: "Secunderabad", district: "Hyderabad", pincode: "500003", region: "🌆 Telangana Hubs" },
+  { name: "Warangal", district: "Warangal", pincode: "506001", region: "🌆 Telangana Hubs" },
+  { name: "Khammam", district: "Khammam", pincode: "507001", region: "🌆 Telangana Hubs" },
+  { name: "Nizamabad", district: "Nizamabad", pincode: "503001", region: "🌆 Telangana Hubs" },
+  { name: "Karimnagar", district: "Karimnagar", pincode: "505001", region: "🌆 Telangana Hubs" },
+  { name: "Ramagundam", district: "Peddapalli", pincode: "505208", region: "🌆 Telangana Hubs" },
+  { name: "Mahbubnagar", district: "Mahbubnagar", pincode: "509001", region: "🌆 Telangana Hubs" },
+  { name: "Nalgonda", district: "Nalgonda", pincode: "508001", region: "🌆 Telangana Hubs" },
+  { name: "Suryapet", district: "Suryapet", pincode: "508213", region: "🌆 Telangana Hubs" },
+  { name: "Siddipet", district: "Siddipet", pincode: "502103", region: "🌆 Telangana Hubs" },
+
+  // 5. Other Major Corridors
+  { name: "Bengaluru (Bangalore)", district: "Bengaluru Urban", pincode: "560001", region: "🗺️ Other Major Corridors" },
+  { name: "Chennai", district: "Chennai", pincode: "600001", region: "🗺️ Other Major Corridors" },
+  { name: "Bhubaneswar", district: "Khordha", pincode: "751001", region: "🗺️ Other Major Corridors" },
+  { name: "Mumbai", district: "Mumbai", pincode: "400001", region: "🗺️ Other Major Corridors" }
 ];
 
 const COMMON_SOURCES = [
@@ -88,22 +147,42 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
   const [gpsStatus, setGpsStatus] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedItem, setSubmittedItem] = useState(null);
+  const [selectedTownOption, setSelectedTownOption] = useState('Kakinada');
+  const [customTownName, setCustomTownName] = useState('');
 
   const handleTownChange = (e) => {
-    const selectedTown = GODAVARI_TOWNS.find(t => t.name === e.target.value);
-    if (selectedTown) {
+    const val = e.target.value;
+    setSelectedTownOption(val);
+
+    if (val === 'Other') {
       setFormData(prev => ({
         ...prev,
-        destination_area: selectedTown.name,
-        district: selectedTown.district,
-        pincode: selectedTown.pincode
+        destination_area: customTownName.trim() || 'Other'
       }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        destination_area: e.target.value
-      }));
+      const selectedTown = REGIONAL_TOWNS.find(t => t.name === val);
+      if (selectedTown) {
+        setFormData(prev => ({
+          ...prev,
+          destination_area: selectedTown.name,
+          district: selectedTown.district,
+          pincode: selectedTown.pincode
+        }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          destination_area: val
+        }));
+      }
     }
+  };
+
+  const handleCustomTownChange = (cityName) => {
+    setCustomTownName(cityName);
+    setFormData(prev => ({
+      ...prev,
+      destination_area: cityName
+    }));
   };
 
   const handleSourceChange = (e) => {
@@ -161,6 +240,14 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const targetTown = selectedTownOption === 'Other' ? customTownName.trim() : formData.destination_area;
+
+    if (!targetTown) {
+      alert("Please specify the Destination Town / City name.");
+      return;
+    }
+
     if (!formData.vendor_name.trim() || !formData.product_name.trim() || !formData.selling_volume_kg || !formData.buying_price_per_kg) {
       alert("Please fill in the Vendor Name, Product Name, Selling Volume, and Buying Price.");
       return;
@@ -168,7 +255,11 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
 
     setIsSubmitting(true);
     try {
-      const result = await submitSurvey(formData);
+      const submissionData = {
+        ...formData,
+        destination_area: targetTown
+      };
+      const result = await submitSurvey(submissionData);
       setSubmittedItem(result);
       if (onSurveySubmitted) onSurveySubmitted(result);
     } catch (err) {
@@ -181,11 +272,16 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
 
   const handleResetForNext = () => {
     setSubmittedItem(null);
+    setSelectedTownOption('Kakinada');
+    setCustomTownName('');
     setFormData(prev => ({
       ...prev,
       vendor_name: '',
       contact_person: '',
       phone: '',
+      destination_area: 'Kakinada',
+      district: 'Kakinada / East Godavari',
+      pincode: '533001',
       selling_volume_kg: '',
       buying_price_per_kg: '',
       selling_price_per_kg: '',
@@ -304,14 +400,47 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
             <label className="form-label">Destination Town / City *</label>
             <select
               className="form-select"
-              value={formData.destination_area}
+              value={selectedTownOption}
               onChange={handleTownChange}
             >
-              {GODAVARI_TOWNS.map(t => (
-                <option key={t.name} value={t.name}>{t.name} ({t.district})</option>
+              {Object.entries(
+                REGIONAL_TOWNS.reduce((acc, town) => {
+                  acc[town.region] = acc[town.region] || [];
+                  acc[town.region].push(town);
+                  return acc;
+                }, {})
+              ).map(([regionName, towns]) => (
+                <optgroup key={regionName} label={regionName}>
+                  {towns.map((t) => (
+                    <option key={t.name} value={t.name}>
+                      {t.name} ({t.district})
+                    </option>
+                  ))}
+                </optgroup>
               ))}
-              <option value="Other">Other Region (Specify)</option>
+              <optgroup label="➕ Custom Location">
+                <option value="Other">Other / Non-Listed City (Type Below)</option>
+              </optgroup>
             </select>
+
+            {/* Extra input box shown when Other is selected */}
+            {selectedTownOption === 'Other' && (
+              <div style={{ marginTop: '10px' }}>
+                <label className="form-label" style={{ color: 'var(--primary-700)', fontWeight: 700 }}>
+                  ✏️ Enter Custom Town / City Name *
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Type the town or city name (e.g., Jangareddygudem, Narsapur, etc.)"
+                  value={customTownName}
+                  onChange={(e) => handleCustomTownChange(e.target.value)}
+                  required
+                  autoFocus
+                  style={{ borderColor: 'var(--primary-600)', background: '#f0fbf5' }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="form-group">
