@@ -9,7 +9,9 @@ export default function Navbar({
   searchQuery,
   onSearchChange,
   onOpenWhatsApp,
-  onSelectCategory
+  onSelectCategory,
+  currentView = 'storefront',
+  onSwitchView
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -23,7 +25,14 @@ export default function Navbar({
 
       <div className="nav-container">
         {/* Brand Logo matching sketch "GODAVARI GROWN" */}
-        <a href="#" className="brand-logo">
+        <a 
+          href="#" 
+          className="brand-logo"
+          onClick={(e) => {
+            e.preventDefault();
+            if (onSwitchView) onSwitchView('storefront');
+          }}
+        >
           <div className="brand-icon-wrapper">
             <span style={{ fontSize: '1.4rem' }}>🍄</span>
           </div>
@@ -123,9 +132,47 @@ export default function Navbar({
             {translations.navB2B}
           </a>
 
-          <a href="#contact" className="nav-link" onClick={() => setMobileMenuOpen(false)}>
+          <a href="#contact" className="nav-link" onClick={() => {
+            if (onSwitchView) onSwitchView('storefront');
+            setMobileMenuOpen(false);
+          }}>
             {translations.navContact}
           </a>
+
+          {/* Market Intelligence & Ground Survey Hub Link */}
+          <button
+            type="button"
+            className="nav-link-intel-btn"
+            onClick={() => {
+              if (onSwitchView) {
+                onSwitchView(currentView === 'storefront' ? 'intelligence' : 'storefront');
+              }
+              setMobileMenuOpen(false);
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: currentView !== 'storefront' ? 'var(--primary-700)' : 'var(--primary-100)',
+              color: currentView !== 'storefront' ? '#ffffff' : 'var(--primary-800)',
+              border: '1px solid var(--primary-400)',
+              padding: '6px 14px',
+              borderRadius: 'var(--radius-full)',
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: currentView !== 'storefront' ? '0 2px 8px rgba(27, 77, 50, 0.3)' : 'none'
+            }}
+            title="Field Market Survey & Geo-Sourcing Intelligence"
+          >
+            <span>🌾 {currentView !== 'storefront' ? 'Storefront View' : 'Market Intel & Survey'}</span>
+            {currentView === 'storefront' && (
+              <span style={{ fontSize: '0.68rem', background: '#d97706', color: '#fff', padding: '1px 5px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                Intel
+              </span>
+            )}
+          </button>
 
           {/* Language Switcher matching sketch LANGUAGE: ENGLISH */}
           <div className="lang-selector-box">

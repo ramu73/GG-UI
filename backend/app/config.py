@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     LLM_MODEL: str = "gemini-2.5-flash"
 
+    # Market Survey Demo Data Toggle (False by default for production)
+    ENABLE_DEMO_DATA: bool = False
+
     class Config:
         env_file = "backend/.env"
         extra = "ignore"

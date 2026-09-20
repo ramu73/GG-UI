@@ -2,7 +2,7 @@ import React from 'react';
 import { MapPin, Phone, Mail, Clock, MessageCircle, Heart } from 'lucide-react';
 import '../styles/Footer.css';
 
-export default function Footer({ onOpenWhatsApp, whatsappNumber = "+919876543210" }) {
+export default function Footer({ onOpenWhatsApp, whatsappNumber = "+919876543210", onSwitchView }) {
   return (
     <footer id="contact" className="main-footer">
       <div className="container">
@@ -30,7 +30,28 @@ export default function Footer({ onOpenWhatsApp, whatsappNumber = "+919876543210
               <li className="footer-link-item"><a href="#products">Mushroom Catalog</a></li>
               <li className="footer-link-item"><a href="#certifications">Food Safety & Certifications</a></li>
               <li className="footer-link-item"><a href="#b2b">Wholesale / HoReCa Supply</a></li>
-              <li className="footer-link-item"><a href="#contact">Contact & Delivery Hub</a></li>
+              {onSwitchView && (
+                <>
+                  <li className="footer-link-item">
+                    <a 
+                      href="#survey" 
+                      onClick={(e) => { e.preventDefault(); onSwitchView('survey'); }}
+                      style={{ color: 'var(--accent-amber)', fontWeight: 600 }}
+                    >
+                      📝 Field Survey Form
+                    </a>
+                  </li>
+                  <li className="footer-link-item">
+                    <a 
+                      href="#intel" 
+                      onClick={(e) => { e.preventDefault(); onSwitchView('intelligence'); }}
+                      style={{ color: 'var(--accent-emerald)', fontWeight: 600 }}
+                    >
+                      📊 Geo-Sourcing Intelligence
+                    </a>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 
