@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   MapPin, 
   Navigation, 
@@ -9,96 +9,118 @@ import {
   CheckCircle, 
   ArrowRight,
   RefreshCw,
-  Sparkles 
+  Sparkles,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { submitSurvey, computeMonthlyVolume } from '../data/surveyService';
 
+const deriveCategory = (productName) => {
+  const name = (productName || '').toLowerCase();
+  if (name.includes('mushroom') || name.includes('spawn') || name.includes('calocybe') || name.includes('pleurotus')) {
+    return 'Mushrooms';
+  }
+  if (name.includes('broccoli') || name.includes('bell pepper') || name.includes('capsicum') || name.includes('zucchini')) {
+    return 'Exotic Veggies';
+  }
+  if (name.includes('dragon fruit') || name.includes('berry') || name.includes('papaya')) {
+    return 'Fruits';
+  }
+  if (name.includes('cucumber') || name.includes('hydroponic') || name.includes('microgreen') || name.includes('herb')) {
+    return 'Hydroponics';
+  }
+  if (name.includes('corn') || name.includes('tomato') || name.includes('onion') || name.includes('potato')) {
+    return 'Common Veggies';
+  }
+  return 'Mushrooms';
+};
+
 const REGIONAL_TOWNS = [
-  // 1. East Godavari, Kakinada & Konaseema
-  { name: "Kakinada", district: "Kakinada / East Godavari", pincode: "533001", region: "🌾 East Godavari & Konaseema" },
-  { name: "Rajahmundry", district: "East Godavari", pincode: "533101", region: "🌾 East Godavari & Konaseema" },
+  // 1. East Godavari, Kakinada & Konaseema (Sorted Alphabetically A-Z)
   { name: "Amalapuram", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533201", region: "🌾 East Godavari & Konaseema" },
-  { name: "Samalkota", district: "Kakinada", pincode: "533440", region: "🌾 East Godavari & Konaseema" },
+  { name: "Anaparthi", district: "East Godavari", pincode: "533342", region: "🌾 East Godavari & Konaseema" },
+  { name: "Kakinada", district: "Kakinada / East Godavari", pincode: "533001", region: "🌾 East Godavari & Konaseema" },
+  { name: "Kothapeta", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533223", region: "🌾 East Godavari & Konaseema" },
   { name: "Mandapeta", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533308", region: "🌾 East Godavari & Konaseema" },
+  { name: "Mummidivaram", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533216", region: "🌾 East Godavari & Konaseema" },
   { name: "Peddapuram", district: "Kakinada", pincode: "533437", region: "🌾 East Godavari & Konaseema" },
   { name: "Pithapuram", district: "Kakinada", pincode: "533450", region: "🌾 East Godavari & Konaseema" },
+  { name: "Rajahmundry", district: "East Godavari", pincode: "533101", region: "🌾 East Godavari & Konaseema" },
   { name: "Ramachandrapuram", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533255", region: "🌾 East Godavari & Konaseema" },
-  { name: "Tuni", district: "Kakinada", pincode: "533401", region: "🌾 East Godavari & Konaseema" },
   { name: "Ravulapalem", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533238", region: "🌾 East Godavari & Konaseema" },
   { name: "Razole", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533242", region: "🌾 East Godavari & Konaseema" },
-  { name: "Anaparthi", district: "East Godavari", pincode: "533342", region: "🌾 East Godavari & Konaseema" },
-  { name: "Mummidivaram", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533216", region: "🌾 East Godavari & Konaseema" },
-  { name: "Kothapeta", district: "Dr. B.R. Ambedkar Konaseema", pincode: "533223", region: "🌾 East Godavari & Konaseema" },
+  { name: "Samalkota", district: "Kakinada", pincode: "533440", region: "🌾 East Godavari & Konaseema" },
+  { name: "Tuni", district: "Kakinada", pincode: "533401", region: "🌾 East Godavari & Konaseema" },
   { name: "Yanam", district: "Puducherry Enclave", pincode: "533464", region: "🌾 East Godavari & Konaseema" },
 
-  // 2. West Godavari & Eluru
+  // 2. West Godavari & Eluru (Sorted Alphabetically A-Z)
+  { name: "Akividu", district: "West Godavari", pincode: "534235", region: "🌿 West Godavari & Eluru" },
+  { name: "Attili", district: "West Godavari", pincode: "534134", region: "🌿 West Godavari & Eluru" },
   { name: "Bhimavaram", district: "West Godavari", pincode: "534201", region: "🌿 West Godavari & Eluru" },
+  { name: "Chintalapudi", district: "Eluru", pincode: "534460", region: "🌿 West Godavari & Eluru" },
   { name: "Eluru", district: "Eluru", pincode: "534001", region: "🌿 West Godavari & Eluru" },
-  { name: "Tanuku", district: "West Godavari", pincode: "534211", region: "🌿 West Godavari & Eluru" },
-  { name: "Tadepalligudem", district: "West Godavari", pincode: "534101", region: "🌿 West Godavari & Eluru" },
-  { name: "Palakollu", district: "West Godavari", pincode: "534260", region: "🌿 West Godavari & Eluru" },
+  { name: "Jangareddygudem", district: "Eluru", pincode: "534447", region: "🌿 West Godavari & Eluru" },
+  { name: "Kovvur", district: "East Godavari", pincode: "534350", region: "🌿 West Godavari & Eluru" },
   { name: "Narsapur", district: "West Godavari", pincode: "534275", region: "🌿 West Godavari & Eluru" },
   { name: "Nidadavole", district: "East Godavari", pincode: "534301", region: "🌿 West Godavari & Eluru" },
-  { name: "Kovvur", district: "East Godavari", pincode: "534350", region: "🌿 West Godavari & Eluru" },
-  { name: "Jangareddygudem", district: "Eluru", pincode: "534447", region: "🌿 West Godavari & Eluru" },
-  { name: "Akividu", district: "West Godavari", pincode: "534235", region: "🌿 West Godavari & Eluru" },
-  { name: "Chintalapudi", district: "Eluru", pincode: "534460", region: "🌿 West Godavari & Eluru" },
-  { name: "Attili", district: "West Godavari", pincode: "534134", region: "🌿 West Godavari & Eluru" },
+  { name: "Palakollu", district: "West Godavari", pincode: "534260", region: "🌿 West Godavari & Eluru" },
+  { name: "Tadepalligudem", district: "West Godavari", pincode: "534101", region: "🌿 West Godavari & Eluru" },
+  { name: "Tanuku", district: "West Godavari", pincode: "534211", region: "🌿 West Godavari & Eluru" },
 
-  // 3. Rest of Andhra Pradesh Hubs
+  // 3. Rest of Andhra Pradesh Hubs (Sorted Alphabetically A-Z)
+  { name: "Anantapur", district: "Anantapur", pincode: "515001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Chittoor", district: "Chittoor", pincode: "517001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Gudivada", district: "Krishna", pincode: "521301", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Guntur", district: "Guntur", pincode: "522002", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Hindupur", district: "Sri Sathya Sai", pincode: "515201", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Kadapa", district: "YSR Kadapa", pincode: "516001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Kurnool", district: "Kurnool", pincode: "518001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Machilipatnam", district: "Krishna", pincode: "521001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Madanapalle", district: "Annamayya", pincode: "517325", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Mangalagiri", district: "Guntur", pincode: "522503", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Nandyal", district: "Nandyal", pincode: "518501", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Nellore", district: "SPSR Nellore", pincode: "524001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Ongole", district: "Prakasam", pincode: "523001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Proddatur", district: "YSR Kadapa", pincode: "516360", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Srikakulam", district: "Srikakulam", pincode: "532001", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Tenali", district: "Guntur", pincode: "522201", region: "🏙️ Andhra Pradesh Cities" },
+  { name: "Tirupati", district: "Tirupati", pincode: "517501", region: "🏙️ Andhra Pradesh Cities" },
   { name: "Vijayawada", district: "NTR / Krishna", pincode: "520001", region: "🏙️ Andhra Pradesh Cities" },
   { name: "Visakhapatnam (Vizag)", district: "Visakhapatnam", pincode: "530002", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Guntur", district: "Guntur", pincode: "522002", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Tirupati", district: "Tirupati", pincode: "517501", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Nellore", district: "SPSR Nellore", pincode: "524001", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Kurnool", district: "Kurnool", pincode: "518001", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Kadapa", district: "YSR Kadapa", pincode: "516001", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Anantapur", district: "Anantapur", pincode: "515001", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Ongole", district: "Prakasam", pincode: "523001", region: "🏙️ Andhra Pradesh Cities" },
   { name: "Vizianagaram", district: "Vizianagaram", pincode: "535002", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Srikakulam", district: "Srikakulam", pincode: "532001", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Machilipatnam", district: "Krishna", pincode: "521001", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Tenali", district: "Guntur", pincode: "522201", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Mangalagiri", district: "Guntur", pincode: "522503", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Gudivada", district: "Krishna", pincode: "521301", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Chittoor", district: "Chittoor", pincode: "517001", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Madanapalle", district: "Annamayya", pincode: "517325", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Nandyal", district: "Nandyal", pincode: "518501", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Hindupur", district: "Sri Sathya Sai", pincode: "515201", region: "🏙️ Andhra Pradesh Cities" },
-  { name: "Proddatur", district: "YSR Kadapa", pincode: "516360", region: "🏙️ Andhra Pradesh Cities" },
 
-  // 4. Telangana Hubs
+  // 4. Telangana Hubs (Sorted Alphabetically A-Z)
   { name: "Hyderabad", district: "Hyderabad", pincode: "500001", region: "🌆 Telangana Hubs" },
-  { name: "Secunderabad", district: "Hyderabad", pincode: "500003", region: "🌆 Telangana Hubs" },
-  { name: "Warangal", district: "Warangal", pincode: "506001", region: "🌆 Telangana Hubs" },
-  { name: "Khammam", district: "Khammam", pincode: "507001", region: "🌆 Telangana Hubs" },
-  { name: "Nizamabad", district: "Nizamabad", pincode: "503001", region: "🌆 Telangana Hubs" },
   { name: "Karimnagar", district: "Karimnagar", pincode: "505001", region: "🌆 Telangana Hubs" },
-  { name: "Ramagundam", district: "Peddapalli", pincode: "505208", region: "🌆 Telangana Hubs" },
+  { name: "Khammam", district: "Khammam", pincode: "507001", region: "🌆 Telangana Hubs" },
   { name: "Mahbubnagar", district: "Mahbubnagar", pincode: "509001", region: "🌆 Telangana Hubs" },
   { name: "Nalgonda", district: "Nalgonda", pincode: "508001", region: "🌆 Telangana Hubs" },
-  { name: "Suryapet", district: "Suryapet", pincode: "508213", region: "🌆 Telangana Hubs" },
+  { name: "Nizamabad", district: "Nizamabad", pincode: "503001", region: "🌆 Telangana Hubs" },
+  { name: "Ramagundam", district: "Peddapalli", pincode: "505208", region: "🌆 Telangana Hubs" },
+  { name: "Secunderabad", district: "Hyderabad", pincode: "500003", region: "🌆 Telangana Hubs" },
   { name: "Siddipet", district: "Siddipet", pincode: "502103", region: "🌆 Telangana Hubs" },
+  { name: "Suryapet", district: "Suryapet", pincode: "508213", region: "🌆 Telangana Hubs" },
+  { name: "Warangal", district: "Warangal", pincode: "506001", region: "🌆 Telangana Hubs" },
 
-  // 5. Other Major Corridors
+  // 5. Other Major Corridors (Sorted Alphabetically A-Z)
   { name: "Bengaluru (Bangalore)", district: "Bengaluru Urban", pincode: "560001", region: "🗺️ Other Major Corridors" },
-  { name: "Chennai", district: "Chennai", pincode: "600001", region: "🗺️ Other Major Corridors" },
   { name: "Bhubaneswar", district: "Khordha", pincode: "751001", region: "🗺️ Other Major Corridors" },
+  { name: "Chennai", district: "Chennai", pincode: "600001", region: "🗺️ Other Major Corridors" },
   { name: "Mumbai", district: "Mumbai", pincode: "400001", region: "🗺️ Other Major Corridors" }
 ];
 
 const COMMON_SOURCES = [
   { name: "Bangalore Wholesale Mandi", distance: 680 },
-  { name: "Hyderabad Wholesale Market", distance: 420 },
-  { name: "Vijayawada Wholesale Hub", distance: 150 },
-  { name: "Rajahmundry / Kakinada Local Mandi", distance: 40 },
-  { name: "Ooty / Nilgiris Cold Supply", distance: 820 },
-  { name: "Nashik / Pune Mandi", distance: 950 },
+  { name: "Direct Interstate Truck / Trader", distance: 500 },
   { name: "Guntur Wholesale Yard", distance: 180 },
-  { name: "Vizag Wholesale Market", distance: 160 },
-  { name: "Local Small Cultivators / Farms", distance: 30 },
+  { name: "Hyderabad Wholesale Market", distance: 420 },
   { name: "Local Intermediary / Commission Agent", distance: 60 },
-  { name: "Direct Interstate Truck / Trader", distance: 500 }
+  { name: "Local Small Cultivators / Farms", distance: 30 },
+  { name: "Nashik / Pune Mandi", distance: 950 },
+  { name: "Ooty / Nilgiris Cold Supply", distance: 820 },
+  { name: "Rajahmundry / Kakinada Local Mandi", distance: 40 },
+  { name: "Vijayawada Wholesale Hub", distance: 150 },
+  { name: "Vizag Wholesale Market", distance: 160 }
 ];
 
 const PRODUCT_SUGGESTIONS = [
@@ -120,7 +142,11 @@ const PAIN_POINTS_OPTIONS = [
   "Frequent Stockouts & Delays",
   "Middleman Margin Cut",
   "Lack of Freshness / Stale Taste",
-  "Inconsistent Sizing & Grading"
+  "Inconsistent Sizing & Grading",
+  "Short Shelf Life (1-2 Days)",
+  "Sudden Price Volatility & Spikes",
+  "High Minimum Order Quantity (MOQ)",
+  "Lack of Organic / Lab Certification"
 ];
 
 export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics }) {
@@ -137,6 +163,7 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
     product_category: 'Mushrooms',
     product_name: 'White Button Mushroom',
     selling_volume_kg: '',
+    volume_period: 'Day',
     frequency: 'Daily',
     source_location: 'Bangalore Wholesale Mandi',
     source_distance_km: 680,
@@ -152,8 +179,30 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
   const [submittedItem, setSubmittedItem] = useState(null);
   const [selectedTownOption, setSelectedTownOption] = useState('Kakinada');
   const [customTownName, setCustomTownName] = useState('');
+  const [townSearchQuery, setTownSearchQuery] = useState('');
   const [selectedSourceOption, setSelectedSourceOption] = useState('Bangalore Wholesale Mandi');
   const [customSourceName, setCustomSourceName] = useState('');
+  const [painPointsList, setPainPointsList] = useState(PAIN_POINTS_OPTIONS);
+  const [painPointSearchQuery, setPainPointSearchQuery] = useState('');
+
+  // Filter pain points dynamically based on user search query
+  const filteredPainPoints = useMemo(() => {
+    const q = painPointSearchQuery.trim().toLowerCase();
+    if (!q) return painPointsList;
+    return painPointsList.filter(p => p.toLowerCase().includes(q));
+  }, [painPointsList, painPointSearchQuery]);
+
+  // Filter towns dynamically based on user search query while keeping alphabetical order
+  const filteredTowns = useMemo(() => {
+    const q = townSearchQuery.trim().toLowerCase();
+    if (!q) return REGIONAL_TOWNS;
+    return REGIONAL_TOWNS.filter(t => 
+      t.name.toLowerCase().includes(q) ||
+      t.district.toLowerCase().includes(q) ||
+      t.region.toLowerCase().includes(q) ||
+      t.pincode.includes(q)
+    );
+  }, [townSearchQuery]);
 
   const handleTownChange = (e) => {
     const val = e.target.value;
@@ -228,6 +277,25 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
     });
   };
 
+  const handleAddCustomPainPoint = (text) => {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return;
+
+    const existing = painPointsList.find(p => p.toLowerCase() === trimmed.toLowerCase());
+    const pointToAdd = existing || trimmed;
+
+    if (!existing) {
+      setPainPointsList(prev => [trimmed, ...prev]);
+    }
+
+    setFormData(prev => {
+      if (prev.pain_points.includes(pointToAdd)) return prev;
+      return { ...prev, pain_points: [...prev.pain_points, pointToAdd] };
+    });
+
+    setPainPointSearchQuery('');
+  };
+
   const detectGPSLocation = () => {
     if (!navigator.geolocation) {
       setGpsStatus({ error: "Geolocation is not supported by your browser" });
@@ -255,8 +323,49 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
     );
   };
 
+  // Handle phone input to allow only numeric digits up to 10 characters
+  const handlePhoneChange = (e) => {
+    let digits = e.target.value.replace(/\D/g, '');
+    // If copied with +91 country code (12 digits), extract the 10-digit mobile number
+    if (digits.length === 12 && digits.startsWith('91')) {
+      digits = digits.slice(2);
+    }
+    // Limit strictly to maximum 10 digits
+    setFormData(prev => ({ ...prev, phone: digits.slice(0, 10) }));
+  };
+
+  // Helper to split comma-separated product names
+  const getSelectedProductList = (productNameStr) => {
+    if (!productNameStr) return [];
+    return productNameStr.split(',').map(s => s.trim()).filter(Boolean);
+  };
+
+  // Toggle products when chips are clicked (multi-product selection)
+  const handleToggleProductChip = (itemName) => {
+    setFormData(prev => {
+      const currentList = getSelectedProductList(prev.product_name);
+      const existsIndex = currentList.findIndex(p => p.toLowerCase() === itemName.toLowerCase());
+      
+      let newList;
+      if (existsIndex >= 0) {
+        newList = currentList.filter((_, idx) => idx !== existsIndex);
+      } else {
+        newList = [...currentList, itemName];
+      }
+
+      const updatedName = newList.join(', ');
+      const updatedCategory = newList.length > 0 ? deriveCategory(newList[newList.length - 1]) : prev.product_category;
+
+      return {
+        ...prev,
+        product_name: updatedName,
+        product_category: updatedCategory
+      };
+    });
+  };
+
   // Calculations for live preview
-  const estimatedMonthlyKg = computeMonthlyVolume(formData.selling_volume_kg, formData.frequency);
+  const estimatedMonthlyKg = computeMonthlyVolume(formData.selling_volume_kg, formData.frequency, formData.volume_period);
   const buyingPrice = parseFloat(formData.buying_price_per_kg) || 0;
   const sellingPrice = parseFloat(formData.selling_price_per_kg) || (buyingPrice > 0 ? buyingPrice * 1.3 : 0);
   const estimatedMonthlySpend = Math.round(estimatedMonthlyKg * buyingPrice);
@@ -278,21 +387,51 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
       return;
     }
 
+    if (formData.phone && formData.phone.length > 0 && formData.phone.length !== 10) {
+      alert("Please enter a valid 10-digit Phone / WhatsApp number.");
+      return;
+    }
+
     if (!formData.vendor_name.trim() || !formData.product_name.trim() || !formData.selling_volume_kg || !formData.buying_price_per_kg) {
       alert("Please fill in the Vendor Name, Product Name, Selling Volume, and Buying Price.");
       return;
     }
 
+    const productList = getSelectedProductList(formData.product_name);
+
     setIsSubmitting(true);
     try {
-      const submissionData = {
-        ...formData,
+      const savedResults = [];
+      const totalVolume = parseFloat(formData.selling_volume_kg) || 0;
+      const volPerItem = productList.length > 1 ? Math.round((totalVolume / productList.length) * 10) / 10 : totalVolume;
+
+      for (const prodName of productList) {
+        const submissionData = {
+          ...formData,
+          destination_area: targetTown,
+          source_location: targetSource,
+          product_category: deriveCategory(prodName),
+          product_name: prodName,
+          selling_volume_kg: volPerItem,
+          volume_period: formData.volume_period || 'Day',
+          buying_price_per_kg: parseFloat(formData.buying_price_per_kg) || 0,
+          selling_price_per_kg: parseFloat(formData.selling_price_per_kg) || (parseFloat(formData.buying_price_per_kg) * 1.3)
+        };
+        const result = await submitSurvey(submissionData);
+        savedResults.push(result);
+      }
+
+      setSubmittedItem({
+        id: savedResults.map(r => r.id).join(', '),
+        count: savedResults.length,
+        productNames: savedResults.map(r => `${r.product_name} (${r.monthly_volume_kg} kg/mo)`).join(', '),
         destination_area: targetTown,
-        source_location: targetSource
-      };
-      const result = await submitSurvey(submissionData);
-      setSubmittedItem(result);
-      if (onSurveySubmitted) onSurveySubmitted(result);
+        total_monthly_volume: savedResults.reduce((acc, r) => acc + (r.monthly_volume_kg || 0), 0)
+      });
+
+      if (onSurveySubmitted && savedResults.length > 0) {
+        onSurveySubmitted(savedResults[0]);
+      }
     } catch (err) {
       console.error("Survey submission failed:", err);
       alert("Submission failed. Saved locally.");
@@ -305,8 +444,10 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
     setSubmittedItem(null);
     setSelectedTownOption('Kakinada');
     setCustomTownName('');
+    setTownSearchQuery('');
     setSelectedSourceOption('Bangalore Wholesale Mandi');
     setCustomSourceName('');
+    setPainPointSearchQuery('');
     setFormData(prev => ({
       ...prev,
       vendor_name: '',
@@ -315,9 +456,13 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
       destination_area: 'Kakinada',
       district: 'Kakinada / East Godavari',
       pincode: '533001',
+      product_category: 'Mushrooms',
+      product_name: 'Milky Mushroom (Calocybe)',
+      selling_volume_kg: '',
+      volume_period: 'Day',
+      frequency: 'Daily',
       source_location: 'Bangalore Wholesale Mandi',
       source_distance_km: 680,
-      selling_volume_kg: '',
       buying_price_per_kg: '',
       selling_price_per_kg: '',
       notes: ''
@@ -339,9 +484,14 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
         <div className="survey-success-toast">
           <CheckCircle size={22} style={{ flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <strong>Survey Recorded Successfully! [{submittedItem.id}]</strong>
+            <strong>
+              {submittedItem.count > 1 
+                ? `${submittedItem.count} Products Recorded Successfully! [${submittedItem.id}]`
+                : `Survey Recorded Successfully! [${submittedItem.id}]`
+              }
+            </strong>
             <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.95 }}>
-              Demand for {submittedItem.product_name} in {submittedItem.destination_area} ({submittedItem.monthly_volume_kg} kg/mo) is now logged in the intelligence matrix.
+              Demand for {submittedItem.productNames} in {submittedItem.destination_area} (Total: {submittedItem.total_monthly_volume.toLocaleString()} kg/mo) is now logged in the intelligence matrix.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -416,10 +566,13 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
             <label className="form-label">Phone / WhatsApp Number</label>
             <input
               type="tel"
+              inputMode="numeric"
+              pattern="[0-9]{10}"
+              maxLength={10}
               className="form-input"
-              placeholder="e.g., +91 98765 43210"
+              placeholder="e.g., 9876543210"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={handlePhoneChange}
             />
           </div>
         </div>
@@ -432,30 +585,137 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
 
         <div className="form-grid-2">
           <div className="form-group">
-            <label className="form-label">Destination Town / City *</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>Destination Town / City *</label>
+              {selectedTownOption === 'Other' ? (
+                <span style={{ fontSize: '0.78rem', color: 'var(--primary-700)', fontWeight: 600 }}>Custom Town Active</span>
+              ) : (
+                <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>Alphabetical (A-Z)</span>
+              )}
+            </div>
+
+            {/* Quick Search on Top */}
+            <div style={{ position: 'relative', marginBottom: '8px' }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="🔍 Search town name (e.g. Amalapuram, Rajahmundry)..."
+                value={townSearchQuery}
+                onChange={(e) => setTownSearchQuery(e.target.value)}
+                style={{ fontSize: '0.88rem', padding: '9px 34px 9px 12px', background: '#f8fafc' }}
+              />
+              {townSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setTownSearchQuery('')}
+                  title="Clear search"
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: '#e2e8f0',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#475569',
+                    fontSize: '11px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* If user types search query, show quick select chips or 1-click custom town */}
+            {townSearchQuery.trim() && (
+              <div style={{ marginBottom: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {filteredTowns.slice(0, 6).map(t => (
+                  <button
+                    key={t.name}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTownOption(t.name);
+                      setFormData(prev => ({
+                        ...prev,
+                        destination_area: t.name,
+                        district: t.district,
+                        pincode: t.pincode
+                      }));
+                      setTownSearchQuery('');
+                    }}
+                    style={{
+                      background: selectedTownOption === t.name ? 'var(--primary-700)' : 'var(--primary-50)',
+                      color: selectedTownOption === t.name ? '#ffffff' : 'var(--primary-800)',
+                      border: '1px solid var(--primary-200)',
+                      borderRadius: '16px',
+                      padding: '4px 10px',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    📍 {t.name}
+                  </button>
+                ))}
+                {filteredTowns.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTownOption('Other');
+                      setCustomTownName(townSearchQuery.trim());
+                      setFormData(prev => ({ ...prev, destination_area: townSearchQuery.trim() }));
+                      setTownSearchQuery('');
+                    }}
+                    style={{
+                      background: '#ecfdf5',
+                      color: '#065f46',
+                      border: '1px dashed #059669',
+                      borderRadius: '8px',
+                      padding: '6px 12px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      width: '100%',
+                      textAlign: 'left'
+                    }}
+                  >
+                    ➕ Use "{townSearchQuery.trim()}" as Custom Town / City
+                  </button>
+                )}
+              </div>
+            )}
+
             <select
               className="form-select"
               value={selectedTownOption}
               onChange={handleTownChange}
             >
+              {/* SEARCH & CUSTOM OPTION ON TOP */}
+              <option value="Other">🔍 Search / Type Custom Town (Not in list)</option>
+
+              {/* REGIONS AND TOWNS SORTED ALPHABETICALLY */}
               {Object.entries(
-                REGIONAL_TOWNS.reduce((acc, town) => {
+                (townSearchQuery.trim() ? filteredTowns : REGIONAL_TOWNS).reduce((acc, town) => {
                   acc[town.region] = acc[town.region] || [];
                   acc[town.region].push(town);
                   return acc;
                 }, {})
               ).map(([regionName, towns]) => (
                 <optgroup key={regionName} label={regionName}>
-                  {towns.map((t) => (
+                  {towns.slice().sort((a, b) => a.name.localeCompare(b.name)).map((t) => (
                     <option key={t.name} value={t.name}>
                       {t.name} ({t.district})
                     </option>
                   ))}
                 </optgroup>
               ))}
-              <optgroup label="➕ Custom Location">
-                <option value="Other">Other / Non-Listed City (Type Below)</option>
-              </optgroup>
             </select>
 
             {/* Extra input box shown when Other is selected */}
@@ -554,11 +814,18 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
           </div>
 
           <div className="form-group">
-            <label className="form-label">Specific Product Name *</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label className="form-label" style={{ marginBottom: 0 }}>Specific Product Name *</label>
+              {getSelectedProductList(formData.product_name).length > 1 && (
+                <span style={{ fontSize: '0.78rem', color: 'var(--primary-700)', fontWeight: 600 }}>
+                  {getSelectedProductList(formData.product_name).length} Selected
+                </span>
+              )}
+            </div>
             <input
               type="text"
               className="form-input"
-              placeholder="e.g. White Button Mushroom, Broccoli, Red Capsicum"
+              placeholder="e.g. Milky Mushroom (Calocybe), White Button Mushroom"
               value={formData.product_name}
               onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
               required
@@ -569,41 +836,62 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
         {/* Quick Suggestion Chips */}
         <div style={{ marginBottom: '16px' }}>
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
-            Quick select popular high-demand items:
+            Quick select popular high-demand items (click to select or add multiple):
           </span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            {PRODUCT_SUGGESTIONS.map((item) => (
-              <button
-                key={item}
-                type="button"
-                className="product-vol-chip"
-                onClick={() => setFormData({ ...formData, product_name: item })}
-                style={{
-                  cursor: 'pointer',
-                  borderColor: formData.product_name === item ? 'var(--primary-600)' : 'var(--border-light)',
-                  background: formData.product_name === item ? 'var(--primary-100)' : '#ffffff',
-                  fontWeight: formData.product_name === item ? 700 : 500
-                }}
-              >
-                + {item}
-              </button>
-            ))}
+            {PRODUCT_SUGGESTIONS.map((item) => {
+              const selectedList = getSelectedProductList(formData.product_name);
+              const isSelected = selectedList.some(p => p.toLowerCase() === item.toLowerCase());
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  className="product-vol-chip"
+                  onClick={() => handleToggleProductChip(item)}
+                  style={{
+                    cursor: 'pointer',
+                    borderColor: isSelected ? 'var(--primary-600)' : 'var(--border-light)',
+                    background: isSelected ? 'var(--primary-100)' : '#ffffff',
+                    color: isSelected ? 'var(--primary-800)' : 'var(--text-main)',
+                    fontWeight: isSelected ? 700 : 500,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  {isSelected ? '✓ ' : '+ '} {item}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div className="form-grid-2">
           <div className="form-group">
-            <label className="form-label">Selling / Consumed Volume (in Kilograms) *</label>
-            <input
-              type="number"
-              step="0.5"
-              min="0.5"
-              className="form-input"
-              placeholder="e.g., 30"
-              value={formData.selling_volume_kg}
-              onChange={(e) => setFormData({ ...formData, selling_volume_kg: e.target.value })}
-              required
-            />
+            <label className="form-label">Overall Consumption Quantity *</label>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="number"
+                step="0.5"
+                min="0.5"
+                className="form-input"
+                placeholder="e.g., 30"
+                value={formData.selling_volume_kg}
+                onChange={(e) => setFormData({ ...formData, selling_volume_kg: e.target.value })}
+                required
+                style={{ flex: 1.2, minWidth: '0' }}
+              />
+              <select
+                className="form-select"
+                value={formData.volume_period || 'Day'}
+                onChange={(e) => setFormData({ ...formData, volume_period: e.target.value })}
+                style={{ flex: 1, minWidth: '125px', fontWeight: 600 }}
+              >
+                <option value="Day">/ Day (Daily)</option>
+                <option value="Week">/ Week (Weekly)</option>
+                <option value="Month">/ Month (Monthly)</option>
+              </select>
+            </div>
           </div>
 
           <div className="form-group">
@@ -614,8 +902,11 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
               onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
             >
               <option value="Daily">Daily Consumption / Sales</option>
+              <option value="Alternate Days">Alternate Days (Every 2 Days)</option>
+              <option value="Twice a Week">Twice a Week</option>
               <option value="Weekly">Weekly Requirement</option>
               <option value="Monthly">Monthly Requirement</option>
+              <option value="On-Demand">On-Demand / Intermittent</option>
             </select>
           </div>
         </div>
@@ -634,10 +925,10 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
               value={selectedSourceOption}
               onChange={handleSourceChange}
             >
-              {COMMON_SOURCES.map(s => (
+              <option value="Other">🔍 Search / Type Custom Sourcing Location</option>
+              {COMMON_SOURCES.slice().sort((a, b) => a.name.localeCompare(b.name)).map(s => (
                 <option key={s.name} value={s.name}>{s.name} (~{s.distance} km)</option>
               ))}
-              <option value="Other">➕ Other / Custom Sourcing Location</option>
             </select>
 
             {/* Extra input box shown when Other is selected */}
@@ -698,24 +989,184 @@ export default function MarketSurveyForm({ onSurveySubmitted, onViewAnalytics })
           </div>
         </div>
 
-        {/* Sourcing Pain Points */}
+        {/* Sourcing Pain Points with Search & Custom Add */}
         <div className="form-group">
-          <label className="form-label">
-            <AlertTriangle size={15} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-            Vendor Pain Points with Current Source
-          </label>
-          <div className="pain-points-grid">
-            {PAIN_POINTS_OPTIONS.map(point => (
-              <label key={point} className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={formData.pain_points.includes(point)}
-                  onChange={() => handlePainPointToggle(point)}
-                />
-                <span>{point}</span>
-              </label>
-            ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '4px' }}>
+            <label className="form-label" style={{ marginBottom: 0 }}>
+              <AlertTriangle size={15} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle', color: '#d97706' }} />
+              Vendor Pain Points with Current Source
+            </label>
+            {formData.pain_points.length > 0 && (
+              <span style={{ fontSize: '0.78rem', color: 'var(--primary-700)', fontWeight: 600 }}>
+                {formData.pain_points.length} Selected
+              </span>
+            )}
           </div>
+
+          {/* Quick Search & Custom Add Bar */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <input
+                type="text"
+                className="form-input"
+                placeholder="🔍 Search or type custom pain point..."
+                value={painPointSearchQuery}
+                onChange={(e) => setPainPointSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddCustomPainPoint(painPointSearchQuery);
+                  }
+                }}
+                style={{ fontSize: '0.88rem', padding: '9px 34px 9px 12px', background: '#f8fafc' }}
+              />
+              {painPointSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setPainPointSearchQuery('')}
+                  title="Clear search"
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: '#e2e8f0',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: '#475569',
+                    fontSize: '11px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => handleAddCustomPainPoint(painPointSearchQuery)}
+              disabled={!painPointSearchQuery.trim()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0 16px',
+                background: painPointSearchQuery.trim() ? 'var(--primary-700)' : '#e2e8f0',
+                color: painPointSearchQuery.trim() ? '#ffffff' : '#94a3b8',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.84rem',
+                fontWeight: 600,
+                cursor: painPointSearchQuery.trim() ? 'pointer' : 'not-allowed',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <Plus size={15} />
+              <span>Add Custom</span>
+            </button>
+          </div>
+
+          {/* Currently Selected Pain Point Badges */}
+          {formData.pain_points.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '10px' }}>
+              {formData.pain_points.map(point => (
+                <span
+                  key={point}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    background: 'var(--primary-100)',
+                    color: 'var(--primary-900)',
+                    border: '1px solid var(--primary-300)',
+                    borderRadius: '16px',
+                    padding: '3px 10px',
+                    fontSize: '0.78rem',
+                    fontWeight: 600
+                  }}
+                >
+                  ✓ {point}
+                  <button
+                    type="button"
+                    onClick={() => handlePainPointToggle(point)}
+                    title="Remove point"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--primary-700)',
+                      cursor: 'pointer',
+                      padding: '0 2px',
+                      fontSize: '11px',
+                      lineHeight: 1,
+                      fontWeight: 700
+                    }}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Pain Points Checkbox Grid */}
+          <div className="pain-points-grid">
+            {filteredPainPoints.map(point => {
+              const isChecked = formData.pain_points.includes(point);
+              return (
+                <label 
+                  key={point} 
+                  className="checkbox-label"
+                  style={{
+                    background: isChecked ? 'var(--primary-50)' : 'var(--bg-subtle)',
+                    borderColor: isChecked ? 'var(--primary-300)' : 'transparent',
+                    fontWeight: isChecked ? 600 : 400
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => handlePainPointToggle(point)}
+                  />
+                  <span>{point}</span>
+                </label>
+              );
+            })}
+          </div>
+
+          {/* Empty search state with 1-click Add Custom button */}
+          {filteredPainPoints.length === 0 && painPointSearchQuery.trim() && (
+            <div style={{ padding: '14px', background: '#ecfdf5', borderRadius: '8px', border: '1px dashed #059669', marginTop: '8px' }}>
+              <p style={{ margin: '0 0 8px 0', fontSize: '0.84rem', color: '#065f46' }}>
+                No existing pain point matches "<strong>{painPointSearchQuery.trim()}</strong>"
+              </p>
+              <button
+                type="button"
+                onClick={() => handleAddCustomPainPoint(painPointSearchQuery)}
+                style={{
+                  background: 'var(--primary-700)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 14px',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <Plus size={14} />
+                <span>Add "{painPointSearchQuery.trim()}" as Custom Pain Point</span>
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="form-group">

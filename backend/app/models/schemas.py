@@ -58,6 +58,7 @@ class MarketSurveyCreate(BaseModel):
     product_category: str = Field("Mushrooms", description="Category: Mushrooms, Exotic Veggies, Common Veggies, Fruits, Hydroponics, Dairy, Other")
     product_name: str = Field(..., description="Specific product name (e.g. Milky Mushroom, Broccoli, Bell Pepper)")
     selling_volume_kg: float = Field(..., description="Volume sold or consumed")
+    volume_period: Optional[str] = Field("Day", description="Period for consumption quantity: Day, Week, Month")
     frequency: str = Field("Daily", description="Frequency: Daily, Weekly, Monthly")
     source_location: str = Field(..., description="Where vendor buys it from (e.g., Bangalore Wholesale, Hyderabad Mandi, Vijayawada)")
     source_distance_km: Optional[int] = Field(0, description="Approximate transit distance from source")

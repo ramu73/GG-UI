@@ -189,11 +189,11 @@ from app.config import settings
 SURVEYS_DB: List[dict] = list(INITIAL_BENCHMARK_SURVEYS) if settings.ENABLE_DEMO_DATA else []
 
 
-def calculate_monthly_volume(volume: float, frequency: str) -> float:
-    freq = (frequency or "").lower()
-    if "daily" in freq:
+def calculate_monthly_volume(volume: float, frequency: str, volume_period: Optional[str] = None) -> float:
+    period = (volume_period or frequency or "").lower()
+    if "daily" in period or "day" in period:
         return round(volume * 30.0, 1)
-    elif "weekly" in freq:
+    elif "weekly" in period or "week" in period:
         return round(volume * 4.33, 1)
     return round(volume, 1)
 
@@ -204,7 +204,7 @@ async def create_survey(survey: MarketSurveyCreate):
     Submits a new ground survey record capturing vendor demands, geography, and sourcing origins.
     """
     survey_id = f"SRV-GG-{uuid.uuid4().hex[:6].upper()}"
-    monthly_vol = calculate_monthly_volume(survey.selling_volume_kg, survey.frequency)
+    monthly_vol = calculate_monthly_volume(survey.selling_volume_kg, survey.frequency, survey.volume_period)
     
     item = {
         **survey.dict(),

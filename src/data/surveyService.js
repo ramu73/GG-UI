@@ -228,22 +228,27 @@ export function saveLocalSurveys(surveys) {
   }
 }
 
-export function computeMonthlyVolume(volume, frequency) {
+export function computeMonthlyVolume(volume, frequency, volumePeriod) {
   const num = parseFloat(volume) || 0;
-  const freq = (frequency || '').toLowerCase();
-  if (freq.includes('daily')) return Math.round(num * 30 * 10) / 10;
-  if (freq.includes('weekly')) return Math.round(num * 4.33 * 10) / 10;
+  const period = (volumePeriod || frequency || '').toLowerCase();
+  if (period.includes('daily') || period === 'day') return Math.round(num * 30 * 10) / 10;
+  if (period.includes('weekly') || period === 'week') return Math.round(num * 4.33 * 10) / 10;
   return Math.round(num * 10) / 10;
 }
 
 export async function submitSurvey(surveyData) {
-  const monthlyVol = computeMonthlyVolume(surveyData.selling_volume_kg, surveyData.frequency);
+  const monthlyVol = computeMonthlyVolume(
+    surveyData.selling_volume_kg, 
+    surveyData.frequency, 
+    surveyData.volume_period
+  );
   const newSurvey = {
     ...surveyData,
     id: `SRV-GG-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
     timestamp: new Date().toISOString(),
     monthly_volume_kg: monthlyVol,
     selling_volume_kg: parseFloat(surveyData.selling_volume_kg) || 0,
+    volume_period: surveyData.volume_period || 'Day',
     buying_price_per_kg: parseFloat(surveyData.buying_price_per_kg) || 0,
     selling_price_per_kg: parseFloat(surveyData.selling_price_per_kg) || (parseFloat(surveyData.buying_price_per_kg) * 1.3),
     source_distance_km: parseInt(surveyData.source_distance_km, 10) || 0
