@@ -24,6 +24,22 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api/partners`
   : '/api/partners';
 
+async function parseErrorResponse(res, defaultMsg) {
+  try {
+    const text = await res.text();
+    try {
+      const data = JSON.parse(text);
+      if (data && data.detail) {
+        return typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+      }
+      if (data && data.message) return data.message;
+    } catch (_) {
+      if (text && text.trim()) return text.trim().slice(0, 300);
+    }
+  } catch (_) {}
+  return `${defaultMsg} (HTTP ${res.status} ${res.statusText || ''})`.trim();
+}
+
 /**
  * Fetch all partners from Database
  */
@@ -36,12 +52,7 @@ export async function fetchPartnersFromDb() {
     });
 
     if (!res.ok) {
-      let errorMsg = `Server responded with HTTP ${res.status} (${res.statusText})`;
-      try {
-        const body = await res.json();
-        if (body.detail) errorMsg = body.detail;
-      } catch (_) {}
-      
+      const errorMsg = await parseErrorResponse(res, 'Could not retrieve partners');
       throw new DatabaseException({
         action: 'Fetch Partners from Database',
         message: 'Could not retrieve partners from the database.',
@@ -81,12 +92,7 @@ export async function createPartnerInDb(partnerData) {
     });
 
     if (!res.ok) {
-      let errorMsg = `Failed to create partner (HTTP ${res.status})`;
-      try {
-        const body = await res.json();
-        if (body.detail) errorMsg = body.detail;
-      } catch (_) {}
-
+      const errorMsg = await parseErrorResponse(res, 'Failed to create partner');
       throw new DatabaseException({
         action: 'Save Partner to Database',
         message: `Failed to insert partner "${partnerData.name}" into the database.`,
@@ -125,12 +131,7 @@ export async function updatePartnerInDb(partnerId, updateData) {
     });
 
     if (!res.ok) {
-      let errorMsg = `Failed to update partner (HTTP ${res.status})`;
-      try {
-        const body = await res.json();
-        if (body.detail) errorMsg = body.detail;
-      } catch (_) {}
-
+      const errorMsg = await parseErrorResponse(res, 'Failed to update partner');
       throw new DatabaseException({
         action: 'Update Partner in Database',
         message: `Could not update partner with ID ${partnerId}.`,
@@ -165,12 +166,7 @@ export async function deletePartnerFromDb(partnerId) {
     });
 
     if (!res.ok) {
-      let errorMsg = `Failed to delete partner (HTTP ${res.status})`;
-      try {
-        const body = await res.json();
-        if (body.detail) errorMsg = body.detail;
-      } catch (_) {}
-
+      const errorMsg = await parseErrorResponse(res, 'Failed to delete partner');
       throw new DatabaseException({
         action: 'Delete Partner from Database',
         message: `Could not delete partner with ID ${partnerId}.`,
@@ -205,12 +201,7 @@ export async function fetchTransactionsFromDb() {
     });
 
     if (!res.ok) {
-      let errorMsg = `Server error HTTP ${res.status}`;
-      try {
-        const body = await res.json();
-        if (body.detail) errorMsg = body.detail;
-      } catch (_) {}
-
+      const errorMsg = await parseErrorResponse(res, 'Could not load transactions');
       throw new DatabaseException({
         action: 'Fetch Transactions from Database',
         message: 'Could not load ledger transactions from the database.',
@@ -250,12 +241,7 @@ export async function createTransactionInDb(transactionData) {
     });
 
     if (!res.ok) {
-      let errorMsg = `Server error HTTP ${res.status}`;
-      try {
-        const body = await res.json();
-        if (body.detail) errorMsg = body.detail;
-      } catch (_) {}
-
+      const errorMsg = await parseErrorResponse(res, 'Could not save transaction');
       throw new DatabaseException({
         action: 'Save Transaction to Database',
         message: `Could not save transaction "${transactionData.title}" to the database.`,
@@ -290,12 +276,7 @@ export async function deleteTransactionFromDb(transactionId) {
     });
 
     if (!res.ok) {
-      let errorMsg = `Server error HTTP ${res.status}`;
-      try {
-        const body = await res.json();
-        if (body.detail) errorMsg = body.detail;
-      } catch (_) {}
-
+      const errorMsg = await parseErrorResponse(res, 'Could not delete transaction');
       throw new DatabaseException({
         action: 'Delete Transaction from Database',
         message: `Could not delete transaction ${transactionId} from the database.`,
@@ -330,12 +311,7 @@ export async function clearAllTransactionsFromDb() {
     });
 
     if (!res.ok) {
-      let errorMsg = `Server error HTTP ${res.status}`;
-      try {
-        const body = await res.json();
-        if (body.detail) errorMsg = body.detail;
-      } catch (_) {}
-
+      const errorMsg = await parseErrorResponse(res, 'Could not clear transactions');
       throw new DatabaseException({
         action: 'Clear Transactions in Database',
         message: 'Could not clear transactions from the database.',

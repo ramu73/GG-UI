@@ -1,3 +1,4 @@
+import traceback
 from fastapi import APIRouter, HTTPException, status
 from typing import List
 from app.models.schemas import (
@@ -101,6 +102,7 @@ async def create_partner(partner: PartnerCreate):
         created = ledger_db.add_partner(partner.dict())
         return created
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Database error while adding partner: {str(e)}"

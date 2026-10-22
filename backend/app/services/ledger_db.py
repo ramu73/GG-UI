@@ -2,62 +2,104 @@ import os
 import sqlite3
 import json
 import uuid
+import tempfile
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
-# Ensure storage directory exists
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-os.makedirs(DATA_DIR, exist_ok=True)
-DB_PATH = os.path.join(DATA_DIR, "godavari_partners.db")
+_in_memory_conn = None
 
-def get_connection():
-    """Returns a SQLite connection with dict row factory."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+def get_db_path() -> str:
+    """
+    Determines a guaranteed writable path for SQLite database.
+    Compatible with Vercel Serverless, AWS Lambda, Docker, and Local Dev.
+    """
+    # 1. Explicit environment variable override
+    env_path = os.environ.get("SQLITE_DB_PATH")
+    if env_path:
+        return env_path
 
-def init_db():
-    """Initializes tables for partners and transactions."""
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        
-        # 1. Partners Table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS partners (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                email TEXT DEFAULT '',
-                phone TEXT DEFAULT '',
-                color TEXT DEFAULT '#10b981',
-                initial_equity_target REAL DEFAULT 33.33,
-                created_at TEXT NOT NULL
-            )
-        """)
-        
-        # 2. Transactions Table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS partner_transactions (
-                id TEXT PRIMARY KEY,
-                type TEXT NOT NULL,
-                date TEXT NOT NULL,
-                title TEXT NOT NULL,
-                amount REAL NOT NULL,
-                paid_by TEXT DEFAULT '',
-                payer_id TEXT DEFAULT '',
-                receiver_id TEXT DEFAULT '',
-                category TEXT DEFAULT '',
-                split_mode TEXT DEFAULT 'equal',
-                participant_ids TEXT DEFAULT '[]',
-                splits_json TEXT DEFAULT '{}',
-                notes TEXT DEFAULT '',
-                created_at TEXT NOT NULL
-            )
-        """)
-        conn.commit()
+    # 2. Vercel & AWS Lambda Serverless environments:
+    # On Vercel, the application root (/var/task) is strictly READ-ONLY.
+    # The only writable directory is /tmp (tempfile.gettempdir()).
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        return os.path.join(tempfile.gettempdir(), "godavari_partners.db")
 
-# Run initialization
-init_db()
+    # 3. Local Development: attempt local data directory first
+    try:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        data_dir = os.path.join(base_dir, "data")
+        os.makedirs(data_dir, exist_ok=True)
+        # Test write permission
+        test_file = os.path.join(data_dir, ".perm_test")
+        with open(test_file, "w") as f:
+            f.write("1")
+        os.remove(test_file)
+        return os.path.join(data_dir, "godavari_partners.db")
+    except Exception:
+        # Fallback to system temp folder if local folder is read-only
+        return os.path.join(tempfile.gettempdir(), "godavari_partners.db")
+
+def _execute_schema_creation(conn: sqlite3.Connection):
+    """Creates tables if they do not exist."""
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS partners (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            email TEXT DEFAULT '',
+            phone TEXT DEFAULT '',
+            color TEXT DEFAULT '#10b981',
+            initial_equity_target REAL DEFAULT 33.33,
+            created_at TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS partner_transactions (
+            id TEXT PRIMARY KEY,
+            type TEXT NOT NULL,
+            date TEXT NOT NULL,
+            title TEXT NOT NULL,
+            amount REAL NOT NULL,
+            paid_by TEXT DEFAULT '',
+            payer_id TEXT DEFAULT '',
+            receiver_id TEXT DEFAULT '',
+            category TEXT DEFAULT '',
+            split_mode TEXT DEFAULT 'equal',
+            participant_ids TEXT DEFAULT '[]',
+            splits_json TEXT DEFAULT '{}',
+            notes TEXT DEFAULT '',
+            created_at TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+
+def get_connection() -> sqlite3.Connection:
+    """
+    Returns an open SQLite database connection with Row factory.
+    Gracefully falls back to shared in-memory database if file I/O fails.
+    """
+    global _in_memory_conn
+    db_path = get_db_path()
+
+    try:
+        conn = sqlite3.connect(db_path, timeout=10)
+        conn.row_factory = sqlite3.Row
+        _execute_schema_creation(conn)
+        return conn
+    except Exception as e:
+        print(f"Warning: Could not connect to SQLite file at '{db_path}': {e}. Using in-memory fallback.")
+        if _in_memory_conn is None:
+            _in_memory_conn = sqlite3.connect(":memory:", check_same_thread=False)
+            _in_memory_conn.row_factory = sqlite3.Row
+            _execute_schema_creation(_in_memory_conn)
+        return _in_memory_conn
+
+# Initialize schema safely on module load
+try:
+    with get_connection() as _init_c:
+        pass
+except Exception as _init_err:
+    print(f"Notice: Initial schema check deferred: {_init_err}")
 
 # ==================== PARTNER OPERATIONS ====================
 
@@ -78,30 +120,35 @@ def get_partner_by_id(partner_id: str) -> Optional[Dict[str, Any]]:
 def add_partner(data: Dict[str, Any]) -> Dict[str, Any]:
     partner_id = data.get("id") or f"p-{uuid.uuid4().hex[:6]}"
     now = datetime.utcnow().isoformat() + "Z"
-    
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    color = data.get("color") or "#10b981"
+    equity = float(data.get("initial_equity_target") or 33.33)
+
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO partners (id, name, email, phone, color, initial_equity_target, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            partner_id,
-            data.get("name", "").strip(),
-            data.get("email", "").strip(),
-            data.get("phone", "").strip(),
-            data.get("color") or "#10b981",
-            float(data.get("initial_equity_target") or 33.33),
-            now
-        ))
+        """, (partner_id, name, email, phone, color, equity, now))
         conn.commit()
-    
-    return get_partner_by_id(partner_id)
+
+    return {
+        "id": partner_id,
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "color": color,
+        "initial_equity_target": equity,
+        "created_at": now
+    }
 
 def update_partner(partner_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     existing = get_partner_by_id(partner_id)
     if not existing:
         return None
-    
+
     new_name = data.get("name") if data.get("name") is not None else existing["name"]
     new_email = data.get("email") if data.get("email") is not None else existing["email"]
     new_phone = data.get("phone") if data.get("phone") is not None else existing["phone"]
@@ -116,7 +163,7 @@ def update_partner(partner_id: str, data: Dict[str, Any]) -> Optional[Dict[str, 
             WHERE id = ?
         """, (new_name, new_email, new_phone, new_color, float(new_target), partner_id))
         conn.commit()
-        
+
     return get_partner_by_id(partner_id)
 
 def delete_partner(partner_id: str) -> bool:
@@ -133,22 +180,20 @@ def get_all_transactions() -> List[Dict[str, Any]]:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM partner_transactions ORDER BY date DESC, created_at DESC")
         rows = cursor.fetchall()
-        
+
         result = []
         for r in rows:
             d = dict(r)
-            # Parse JSON fields
             try:
                 d["participantIds"] = json.loads(d.get("participant_ids") or "[]")
             except Exception:
                 d["participantIds"] = []
-                
+
             try:
                 d["splits"] = json.loads(d.get("splits_json") or "{}")
             except Exception:
                 d["splits"] = {}
-                
-            # Rename snake_case to camelCase for frontend contract
+
             d["paidBy"] = d.pop("paid_by", "")
             d["payerId"] = d.pop("payer_id", "")
             d["receiverId"] = d.pop("receiver_id", "")
@@ -156,16 +201,16 @@ def get_all_transactions() -> List[Dict[str, Any]]:
             d.pop("participant_ids", None)
             d.pop("splits_json", None)
             result.append(d)
-            
+
         return result
 
 def add_transaction(data: Dict[str, Any]) -> Dict[str, Any]:
     tx_id = data.get("id") or f"tx-{int(datetime.utcnow().timestamp() * 1000)}"
     now = datetime.utcnow().isoformat() + "Z"
-    
+
     participant_ids_json = json.dumps(data.get("participantIds") or [])
     splits_json = json.dumps(data.get("splits") or {})
-    
+
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -178,7 +223,7 @@ def add_transaction(data: Dict[str, Any]) -> Dict[str, Any]:
             tx_id,
             data.get("type", "expense"),
             data.get("date", datetime.utcnow().strftime("%Y-%m-%d")),
-            data.get("title", "").strip(),
+            (data.get("title") or "").strip(),
             float(data.get("amount") or 0),
             data.get("paidBy", ""),
             data.get("payerId", ""),
@@ -191,7 +236,7 @@ def add_transaction(data: Dict[str, Any]) -> Dict[str, Any]:
             now
         ))
         conn.commit()
-        
+
     return {
         "id": tx_id,
         "type": data.get("type"),
