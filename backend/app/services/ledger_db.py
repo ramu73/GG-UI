@@ -254,12 +254,74 @@ def add_transaction(data: Dict[str, Any]) -> Dict[str, Any]:
         "created_at": now
     }
 
+def get_transaction_by_id(tx_id: str) -> Optional[Dict[str, Any]]:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM partner_transactions WHERE id = ?", (tx_id,))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        try:
+            d["participantIds"] = json.loads(d.get("participant_ids") or "[]")
+        except Exception:
+            d["participantIds"] = []
+        try:
+            d["splits"] = json.loads(d.get("splits_json") or "{}")
+        except Exception:
+            d["splits"] = {}
+        d["paidBy"] = d.pop("paid_by", "")
+        d["payerId"] = d.pop("payer_id", "")
+        d["receiverId"] = d.pop("receiver_id", "")
+        d["splitMode"] = d.pop("split_mode", "equal")
+        d.pop("participant_ids", None)
+        d.pop("splits_json", None)
+        return d
+
+def update_transaction(tx_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    existing = get_transaction_by_id(tx_id)
+    if not existing:
+        # Upsert: add as new transaction if not found
+        data["id"] = tx_id
+        return add_transaction(data)
+
+    t_type = data.get("type", existing["type"])
+    t_date = data.get("date", existing["date"])
+    t_title = (data.get("title") or existing["title"]).strip()
+    t_amount = float(data.get("amount") if data.get("amount") is not None else existing["amount"])
+    t_paid_by = data.get("paidBy", existing["paidBy"])
+    t_payer_id = data.get("payerId", existing["payerId"])
+    t_receiver_id = data.get("receiverId", existing["receiverId"])
+    t_category = data.get("category", existing["category"])
+    t_split_mode = data.get("splitMode", existing["splitMode"])
+    t_notes = data.get("notes", existing["notes"])
+
+    participant_ids = data.get("participantIds") if data.get("participantIds") is not None else existing["participantIds"]
+    splits = data.get("splits") if data.get("splits") is not None else existing["splits"]
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE partner_transactions
+            SET type = ?, date = ?, title = ?, amount = ?, paid_by = ?, payer_id = ?, receiver_id = ?,
+                category = ?, split_mode = ?, participant_ids = ?, splits_json = ?, notes = ?
+            WHERE id = ?
+        """, (
+            t_type, t_date, t_title, t_amount, t_paid_by, t_payer_id, t_receiver_id,
+            t_category, t_split_mode, json.dumps(participant_ids or []), json.dumps(splits or {}),
+            t_notes, tx_id
+        ))
+        conn.commit()
+
+    return get_transaction_by_id(tx_id)
+
 def delete_transaction(tx_id: str) -> bool:
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM partner_transactions WHERE id = ?", (tx_id,))
         conn.commit()
-        return cursor.rowcount > 0
+        # Always return True for idempotent deletion
+        return True
 
 def clear_all_transactions() -> int:
     with get_connection() as conn:
@@ -268,3 +330,4 @@ def clear_all_transactions() -> int:
         deleted_count = cursor.rowcount
         conn.commit()
         return deleted_count
+

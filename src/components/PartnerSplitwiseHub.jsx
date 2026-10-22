@@ -35,6 +35,7 @@ import {
   deletePartnerFromDb,
   fetchTransactionsFromDb,
   createTransactionInDb,
+  updateTransactionInDb,
   deleteTransactionFromDb,
   clearAllTransactionsFromDb,
   DatabaseException
@@ -58,6 +59,7 @@ export default function PartnerSplitwiseHub() {
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState('expense'); // 'expense' | 'investment' | 'settlement'
+  const [editingTxId, setEditingTxId] = useState(null);
   const [isEditPartnersOpen, setIsEditPartnersOpen] = useState(false);
   const [isAddingNewPartner, setIsAddingNewPartner] = useState(false);
 
@@ -268,6 +270,7 @@ export default function PartnerSplitwiseHub() {
 
   // Open modal pre-configured for Settle Up
   const handleOpenSettleUp = (debt) => {
+    setEditingTxId(null);
     setModalType('settlement');
     setFormTitle(`Settlement to ${debt.toName}`);
     setFormAmount(debt.amount.toString());
@@ -285,6 +288,7 @@ export default function PartnerSplitwiseHub() {
       return;
     }
 
+    setEditingTxId(null);
     setModalType(type);
     setFormTitle('');
     setFormAmount('');
@@ -296,7 +300,21 @@ export default function PartnerSplitwiseHub() {
     setIsModalOpen(true);
   };
 
-  // Submit Transaction to Database
+  // Open Edit Modal for an existing transaction (Investment, Expense, or Settlement)
+  const handleOpenEditModal = (tx) => {
+    setEditingTxId(tx.id);
+    setModalType(tx.type || 'expense');
+    setFormTitle(tx.title || '');
+    setFormAmount((tx.amount || '').toString());
+    setFormPaidBy(tx.paidBy || tx.payerId || partners[0]?.id || '');
+    setFormReceiverId(tx.receiverId || (partners.length > 1 ? partners[1].id : partners[0]?.id || ''));
+    setFormCategory(tx.category || (tx.type === 'investment' ? 'seed_capital' : 'seeds'));
+    setFormNotes(tx.notes || '');
+    setFormDate(tx.date || new Date().toISOString().split('T')[0]);
+    setIsModalOpen(true);
+  };
+
+  // Submit Transaction to Database (Create or Update)
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     const amountVal = parseFloat(formAmount);
@@ -313,8 +331,7 @@ export default function PartnerSplitwiseHub() {
     setIsSaving(true);
     setDbError(null);
 
-    const newTx = {
-      id: `tx-${Date.now()}`,
+    const txPayload = {
       type: modalType,
       date: formDate || new Date().toISOString().split('T')[0],
       title: formTitle.trim() || (modalType === 'investment' ? 'Capital Investment' : modalType === 'settlement' ? 'Settlement Payment' : 'Operational Expense'),
@@ -324,26 +341,32 @@ export default function PartnerSplitwiseHub() {
     };
 
     if (modalType === 'investment') {
-      newTx.category = formCategory;
+      txPayload.category = formCategory;
     } else if (modalType === 'expense') {
-      newTx.category = formCategory;
-      newTx.splitMode = 'equal';
-      newTx.participantIds = partners.map(p => p.id); // Split among all partners equally
+      txPayload.category = formCategory;
+      txPayload.splitMode = 'equal';
+      txPayload.participantIds = partners.map(p => p.id); // Split among all partners equally
     } else if (modalType === 'settlement') {
-      newTx.payerId = formPaidBy;
-      newTx.receiverId = formReceiverId;
+      txPayload.payerId = formPaidBy;
+      txPayload.receiverId = formReceiverId;
     }
 
     try {
-      const savedTx = await createTransactionInDb(newTx);
-      setTransactions(prev => [savedTx, ...prev]);
+      if (editingTxId) {
+        const updatedTx = await updateTransactionInDb(editingTxId, txPayload);
+        setTransactions(prev => prev.map(t => t.id === editingTxId ? updatedTx : t));
+      } else {
+        const savedTx = await createTransactionInDb(txPayload);
+        setTransactions(prev => [savedTx, ...prev]);
+      }
       setIsModalOpen(false);
+      setEditingTxId(null);
     } catch (err) {
       setDbError({
-        action: 'Save Transaction to Database',
+        action: editingTxId ? 'Update Transaction in Database' : 'Save Transaction to Database',
         message: err.message || 'Failed to save transaction to database.',
         status: err.status || '500',
-        endpoint: err.endpoint || '/api/partners/transactions',
+        endpoint: err.endpoint || (editingTxId ? `/api/partners/transactions/${editingTxId}` : '/api/partners/transactions'),
         technicalDetails: err.technicalDetails || String(err),
         timestamp: new Date().toLocaleTimeString('en-IN')
       });
@@ -980,15 +1003,25 @@ export default function PartnerSplitwiseHub() {
                       <td>
                         <span className="tx-amount">{formatINR(t.amount)}</span>
                       </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <button 
-                          type="button" 
-                          className="tx-delete-btn"
-                          onClick={() => handleDeleteTx(t.id)}
-                          title="Delete transaction from database"
-                        >
-                          <Trash2 size={15} />
-                        </button>
+                      <td style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <button 
+                            type="button" 
+                            className="tx-action-btn edit"
+                            onClick={() => handleOpenEditModal(t)}
+                            title="Edit transaction / investment / expense"
+                          >
+                            <Edit3 size={15} />
+                          </button>
+                          <button 
+                            type="button" 
+                            className="tx-action-btn delete"
+                            onClick={() => handleDeleteTx(t.id)}
+                            title="Delete transaction from database"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1044,14 +1077,23 @@ export default function PartnerSplitwiseHub() {
           <div className="split-modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="split-modal-header">
               <h3>
-                {modalType === 'expense' && '🧾 Add Shared Expense'}
-                {modalType === 'investment' && '🏦 Add Capital Investment'}
-                {modalType === 'settlement' && '⚖️ Record Debt Settlement'}
+                {editingTxId ? (
+                  modalType === 'expense' ? '✏️ Edit Shared Expense' :
+                  modalType === 'investment' ? '✏️ Edit Capital Investment' :
+                  '✏️ Edit Debt Settlement'
+                ) : (
+                  modalType === 'expense' ? '🧾 Add Shared Expense' :
+                  modalType === 'investment' ? '🏦 Add Capital Investment' :
+                  '⚖️ Record Debt Settlement'
+                )}
               </h3>
               <button 
                 type="button" 
                 className="split-modal-close"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingTxId(null);
+                }}
               >
                 <X size={20} />
               </button>
@@ -1217,12 +1259,15 @@ export default function PartnerSplitwiseHub() {
                 <button 
                   type="button" 
                   className="btn-modal-cancel"
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingTxId(null);
+                  }}
                 >
                   Cancel
                 </button>
                 <button type="submit" className="btn-modal-submit" disabled={isSaving}>
-                  {isSaving ? 'Saving to Database...' : `Save ${modalType === 'expense' ? 'Expense' : modalType === 'investment' ? 'Investment' : 'Settlement'}`}
+                  {isSaving ? 'Saving to Database...' : editingTxId ? 'Update Transaction' : `Save ${modalType === 'expense' ? 'Expense' : modalType === 'investment' ? 'Investment' : 'Settlement'}`}
                 </button>
               </div>
             </form>

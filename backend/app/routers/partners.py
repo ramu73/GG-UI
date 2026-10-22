@@ -56,22 +56,31 @@ async def clear_all_transactions():
             detail=f"Database error while clearing transactions: {str(e)}"
         )
 
+@router.put("/transactions/{transaction_id}", response_model=PartnerTransactionResponse)
+async def update_transaction(transaction_id: str, tx: PartnerTransactionCreate):
+    """
+    Updates an existing transaction (investment, shared expense, or debt settlement).
+    """
+    try:
+        updated = ledger_db.update_transaction(transaction_id, tx.dict())
+        return updated
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error while updating transaction: {str(e)}"
+        )
+
 @router.delete("/transactions/{transaction_id}")
 async def delete_transaction(transaction_id: str):
     """
-    Deletes a transaction from the database.
+    Deletes a transaction from the database (idempotent).
     """
     try:
-        deleted = ledger_db.delete_transaction(transaction_id)
-        if not deleted:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Transaction with ID '{transaction_id}' was not found in database."
-            )
+        ledger_db.delete_transaction(transaction_id)
         return {"status": "success", "message": f"Transaction {transaction_id} deleted."}
-    except HTTPException:
-        raise
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Database error while deleting transaction: {str(e)}"

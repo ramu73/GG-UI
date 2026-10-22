@@ -265,6 +265,45 @@ export async function createTransactionInDb(transactionData) {
 }
 
 /**
+ * Update existing transaction in Database
+ */
+export async function updateTransactionInDb(transactionId, transactionData) {
+  const endpoint = `${API_BASE_URL}/transactions/${transactionId}`;
+  try {
+    const res = await fetch(endpoint, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(transactionData)
+    });
+
+    if (!res.ok) {
+      const errorMsg = await parseErrorResponse(res, 'Could not update transaction');
+      throw new DatabaseException({
+        action: 'Update Transaction in Database',
+        message: `Could not update transaction "${transactionData.title || ''}" in the database.`,
+        status: res.status,
+        endpoint,
+        technicalDetails: errorMsg
+      });
+    }
+
+    return await res.json();
+  } catch (err) {
+    if (err instanceof DatabaseException) throw err;
+    throw new DatabaseException({
+      action: 'Update Transaction in Database',
+      message: 'Database connection failed while updating transaction.',
+      status: 'CONNECTION_REFUSED',
+      endpoint,
+      technicalDetails: err.message || 'Network error.'
+    });
+  }
+}
+
+/**
  * Delete transaction from Database
  */
 export async function deleteTransactionFromDb(transactionId) {
@@ -276,6 +315,11 @@ export async function deleteTransactionFromDb(transactionId) {
     });
 
     if (!res.ok) {
+      // If 404, it means the transaction is already gone from DB (idempotent delete)
+      if (res.status === 404) {
+        return { status: 'success', message: 'Transaction already removed' };
+      }
+
       const errorMsg = await parseErrorResponse(res, 'Could not delete transaction');
       throw new DatabaseException({
         action: 'Delete Transaction from Database',
