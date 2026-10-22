@@ -1,0 +1,626 @@
+/* ==========================================================================
+   Godavari Grown — Real-Time Production Login Page & Auth Experience
+   ========================================================================== */
+
+.login-page-container {
+  min-height: 100vh;
+  display: flex;
+  background-color: #faf7f2;
+  font-family: var(--font-body);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   1. Left Showcase Panel (Visual Farm Story & Social Proof)
+   ========================================================================== */
+.login-showcase-panel {
+  flex: 1.1;
+  position: relative;
+  background-image: url('/assets/farm_hero.jpg');
+  background-size: cover;
+  background-position: center center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.login-showcase-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    145deg,
+    rgba(10, 32, 20, 0.94) 0%,
+    rgba(18, 53, 34, 0.88) 50%,
+    rgba(10, 32, 20, 0.92) 100%
+  );
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 1;
+}
+
+.login-showcase-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Brand Bar on Left Panel */
+.showcase-brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.showcase-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #ffffff;
+}
+
+.showcase-brand-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.showcase-brand-name {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.showcase-brand-tagline {
+  font-size: 0.72rem;
+  color: #86efac;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.showcase-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.showcase-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #4ade80;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #4ade80;
+  animation: pulseLive 2s infinite;
+}
+
+@keyframes pulseLive {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+/* Middle Narrative Block */
+.showcase-narrative {
+  margin: auto 0;
+  max-width: 540px;
+}
+
+.showcase-tag {
+  display: inline-block;
+  background: rgba(217, 119, 6, 0.25);
+  color: #fde68a;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 16px;
+}
+
+.showcase-title {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #ffffff;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+}
+
+.showcase-title span {
+  color: #86efac;
+}
+
+.showcase-description {
+  font-size: 1rem;
+  color: #cbd5e1;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+/* Glassmorphism Stat Cards */
+.showcase-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.showcase-metric-card {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-md);
+  padding: 16px 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 0.2s ease;
+}
+
+.showcase-metric-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.showcase-metric-val {
+  font-family: var(--font-heading);
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.showcase-metric-label {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Bottom Endorsement Box */
+.showcase-endorsement {
+  background: rgba(10, 32, 20, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.endorsement-text {
+  font-size: 0.84rem;
+  color: #e2e8f0;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.endorsement-author {
+  font-size: 0.72rem;
+  color: #86efac;
+  font-weight: 600;
+  font-style: normal;
+  display: block;
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+   2. Right Form Panel (High-End Authentication UI)
+   ========================================================================== */
+.login-form-panel {
+  flex: 0.9;
+  min-width: 440px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 44px 56px;
+  background-color: #ffffff;
+  position: relative;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.04);
+}
+
+/* Top Navigation Bar on Form Side */
+.login-form-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.login-guest-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary-700);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--primary-50);
+  border: 1px solid var(--primary-100);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.login-guest-link:hover {
+  background: var(--primary-100);
+  color: var(--primary-900);
+  transform: translateX(2px);
+}
+
+/* Form Main Wrapper */
+.login-form-wrapper {
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.login-form-header {
+  margin-bottom: 24px;
+}
+
+.login-form-header h2 {
+  font-family: var(--font-heading);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--primary-900);
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.login-form-header p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* Admin Alert if accessing restricted survey */
+.realtime-alert-admin {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: #92400e;
+  font-size: 0.84rem;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.realtime-alert-admin strong {
+  display: block;
+  color: #78350f;
+  margin-bottom: 2px;
+}
+
+/* Form Controls */
+.realtime-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.realtime-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.realtime-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.realtime-label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--primary-900);
+}
+
+.realtime-forgot-link {
+  font-size: 0.8rem;
+  color: var(--primary-600);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.realtime-forgot-link:hover {
+  color: var(--primary-800);
+  text-decoration: underline;
+}
+
+.realtime-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.realtime-input-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.realtime-input {
+  width: 100%;
+  padding: 12px 42px 12px 42px;
+  font-size: 0.94rem;
+  font-family: inherit;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.realtime-input:hover {
+  border-color: #cbd5e1;
+}
+
+.realtime-input:focus {
+  background: #ffffff;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3.5px rgba(46, 128, 85, 0.15);
+}
+
+.realtime-input:focus ~ .realtime-input-icon,
+.realtime-input-box:focus-within .realtime-input-icon {
+  color: var(--primary-600);
+}
+
+.realtime-eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s ease;
+}
+
+.realtime-eye-btn:hover {
+  color: #334155;
+}
+
+/* Remember Me Row */
+.realtime-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.realtime-remember-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.84rem;
+  color: #475569;
+}
+
+.realtime-remember-checkbox input[type="checkbox"] {
+  accent-color: var(--primary-600);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Primary Submit Button */
+.btn-realtime-submit {
+  width: 100%;
+  padding: 13px 20px;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #1b4d32 0%, #0a2014 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 6px 18px rgba(10, 32, 20, 0.2);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 6px;
+}
+
+.btn-realtime-submit:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 24px rgba(10, 32, 20, 0.3);
+  filter: brightness(1.1);
+}
+
+.btn-realtime-submit:active {
+  transform: translateY(0);
+}
+
+/* Real-Time OAuth Divider */
+.realtime-divider {
+  display: flex;
+  align-items: center;
+  margin: 22px 0 16px 0;
+  text-align: center;
+}
+
+.realtime-divider::before,
+.realtime-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.realtime-divider span {
+  padding: 0 12px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+/* OAuth Buttons Stack */
+.realtime-oauth-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-sso-google {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 11px 18px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid #dadce0;
+  background: #ffffff;
+  color: #3c4043;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08);
+}
+
+.btn-sso-google:hover {
+  background: #f8fafd;
+  border-color: #4285f4;
+  box-shadow: 0 2px 6px rgba(66, 133, 244, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-sso-facebook {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 11px 18px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid #1877f2;
+  background: #1877f2;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(24, 119, 242, 0.25);
+}
+
+.btn-sso-facebook:hover {
+  background: #166fe5;
+  border-color: #166fe5;
+  box-shadow: 0 4px 14px rgba(24, 119, 242, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Discreet Demo Auto-fill Bar (Subtle & Professional, NOT an ugly box) */
+.realtime-demo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.demo-fill-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.demo-fill-btn {
+  background: none;
+  border: none;
+  color: var(--primary-700);
+  font-weight: 700;
+  font-size: 0.76rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.demo-fill-btn:hover {
+  background: var(--primary-100);
+  color: var(--primary-900);
+}
+
+/* Security Trust Badges */
+.login-form-footer {
+  margin-top: 24px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+.security-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 960px) {
+  .login-showcase-panel {
+    display: none;
+  }
+  .login-form-panel {
+    flex: 1;
+    min-width: 100%;
+    padding: 32px 24px;
+    box-shadow: none;
+  }
+}

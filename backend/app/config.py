@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     # Market Survey Demo Data Toggle (False by default for production)
     ENABLE_DEMO_DATA: bool = False
 
+    # OAuth & Admin Authentication
+    ADMIN_PASSCODE: str = "godavari2026"
+    ADMIN_EMAILS: str = "admin@godavarigrown.com,survey.admin@godavarigrown.com"
+    GOOGLE_CLIENT_ID: str = ""
+    FACEBOOK_APP_ID: str = ""
+
     class Config:
         env_file = "backend/.env"
         extra = "ignore"

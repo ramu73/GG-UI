@@ -35,3 +35,10 @@ __pycache__/
 .venv/
 venv/
 env/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+backend/app/data/*.db
+backend/data/*.db

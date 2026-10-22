@@ -1,0 +1,229 @@
+/* ==========================================================================
+   Godavari Grown — Authentic Google & Facebook OAuth Modal Styles
+   ========================================================================== */
+
+.oauth-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: oauthModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes oauthModalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.oauth-dialog-card {
+  width: 100%;
+  max-width: 440px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  position: relative;
+  animation: oauthModalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes oauthModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Header */
+.oauth-dialog-header {
+  padding: 28px 28px 18px 28px;
+  text-align: center;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+}
+
+.oauth-dialog-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.oauth-dialog-close:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.oauth-dialog-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.oauth-dialog-title {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.oauth-dialog-subtitle {
+  font-size: 0.88rem;
+  color: #64748b;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Body & Form */
+.oauth-dialog-body {
+  padding: 24px 28px 28px 28px;
+}
+
+.oauth-dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.oauth-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.oauth-input-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.oauth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.oauth-input-wrapper input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 0.94rem;
+  font-family: inherit;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  outline: none;
+  color: #1e293b;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.oauth-input-wrapper input:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+}
+
+.oauth-dialog-card.facebook-mode .oauth-input-wrapper input:focus {
+  border-color: #1877f2;
+  box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.15);
+}
+
+.oauth-pass-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.oauth-privacy-notice {
+  font-size: 0.74rem;
+  color: #64748b;
+  line-height: 1.45;
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid #f1f5f9;
+}
+
+/* Action Buttons */
+.oauth-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.btn-oauth-cancel {
+  background: none;
+  border: 1px solid #cbd5e1;
+  padding: 9px 18px;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-oauth-cancel:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.btn-oauth-submit {
+  border: none;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-oauth-submit.google {
+  background: #1a73e8;
+}
+
+.btn-oauth-submit.google:hover {
+  background: #1557b0;
+  box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
+}
+
+.btn-oauth-submit.facebook {
+  background: #1877f2;
+}
+
+.btn-oauth-submit.facebook:hover {
+  background: #166fe5;
+  box-shadow: 0 2px 8px rgba(24, 119, 242, 0.3);
+}

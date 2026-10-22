@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import chat, products, inquiries, whatsapp, surveys
+from app.routers import chat, products, inquiries, whatsapp, surveys, auth, partners
 
 app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0",
-    description="Backend service for Godavari Grown: RAG AI Chatbot, Product Catalog, WhatsApp API, and Market Intelligence"
+    description="Backend service for Godavari Grown: RAG AI Chatbot, Product Catalog, WhatsApp API, Market Intelligence, and Partner Splitwise Ledger"
 )
 
 # CORS Middleware
@@ -24,6 +24,8 @@ app.include_router(products.router)
 app.include_router(inquiries.router)
 app.include_router(whatsapp.router)
 app.include_router(surveys.router)
+app.include_router(auth.router)
+app.include_router(partners.router)
 
 @app.get("/")
 async def root():

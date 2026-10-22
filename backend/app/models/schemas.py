@@ -97,3 +97,85 @@ class SurveyAnalyticsResponse(BaseModel):
     supply_routes: List[SupplyRouteFlow]
     high_opportunity_gaps: List[Dict[str, Any]]
 
+# Authentication & Admin Schemas
+class AdminLoginRequest(BaseModel):
+    passcode: str = Field(..., description="Administrator passcode")
+
+class OAuthVerifyRequest(BaseModel):
+    provider: str = Field(..., description="google or facebook")
+    token: Optional[str] = None
+    email: Optional[str] = None
+    name: Optional[str] = None
+    avatar: Optional[str] = None
+
+class AuthUserResponse(BaseModel):
+    id: str
+    name: str
+    email: str
+    avatar: Optional[str] = ""
+    provider: str
+    role: str # 'admin' | 'user'
+    title: Optional[str] = None
+
+class AuthTokenResponse(BaseModel):
+    status: str
+    token: str
+    user: AuthUserResponse
+
+# Partner Ledger & Splitwise Schemas
+class PartnerCreate(BaseModel):
+    id: Optional[str] = None
+    name: str = Field(..., description="Partner's full name")
+    email: Optional[str] = ""
+    phone: Optional[str] = ""
+    color: Optional[str] = "#10b981"
+    initial_equity_target: Optional[float] = 33.33
+
+class PartnerUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    color: Optional[str] = None
+    initial_equity_target: Optional[float] = None
+
+class PartnerResponse(BaseModel):
+    id: str
+    name: str
+    email: Optional[str] = ""
+    phone: Optional[str] = ""
+    color: str
+    initial_equity_target: float
+    created_at: Optional[str] = None
+
+class PartnerTransactionCreate(BaseModel):
+    id: Optional[str] = None
+    type: str = Field(..., description="investment, expense, or settlement")
+    date: str
+    title: str
+    amount: float
+    paidBy: Optional[str] = ""
+    payerId: Optional[str] = ""
+    receiverId: Optional[str] = ""
+    category: Optional[str] = ""
+    splitMode: Optional[str] = "equal"
+    participantIds: Optional[List[str]] = []
+    splits: Optional[Dict[str, float]] = None
+    notes: Optional[str] = ""
+
+class PartnerTransactionResponse(BaseModel):
+    id: str
+    type: str
+    date: str
+    title: str
+    amount: float
+    paidBy: Optional[str] = ""
+    payerId: Optional[str] = ""
+    receiverId: Optional[str] = ""
+    category: Optional[str] = ""
+    splitMode: Optional[str] = "equal"
+    participantIds: Optional[List[str]] = []
+    splits: Optional[Dict[str, float]] = None
+    notes: Optional[str] = ""
+    created_at: Optional[str] = None
+
+
