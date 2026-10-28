@@ -64,30 +64,35 @@ export function calculateSplitwiseSummary(partners, transactions) {
     } 
     else if (t.type === 'expense') {
       totalExpenses += amt;
-      // Credit the payer
-      if (stats[t.paidBy]) {
-        stats[t.paidBy].totalExpensesPaid += amt;
-        stats[t.paidBy].totalOutflow += amt;
-      }
+      const isPool = t.paidBy === 'pool' || !t.paidBy;
 
-      // Debit participants according to split
-      if (t.splitMode === 'equal' || !t.splits) {
-        const participants = t.participantIds && t.participantIds.length > 0 
-          ? t.participantIds 
-          : partners.map(p => p.id);
-        const perPerson = amt / participants.length;
+      // If paid by an individual out of personal pocket (not from pool):
+      if (!isPool) {
+        // Credit the payer
+        if (stats[t.paidBy]) {
+          stats[t.paidBy].totalExpensesPaid += amt;
+          stats[t.paidBy].totalOutflow += amt;
+        }
 
-        participants.forEach(pid => {
-          if (stats[pid]) {
-            stats[pid].totalShareBorne += perPerson;
-          }
-        });
-      } else if (t.splitMode === 'custom' && t.splits) {
-        Object.entries(t.splits).forEach(([pid, share]) => {
-          if (stats[pid]) {
-            stats[pid].totalShareBorne += parseFloat(share) || 0;
-          }
-        });
+        // Debit participants according to split
+        if (t.splitMode === 'equal' || !t.splits) {
+          const participants = t.participantIds && t.participantIds.length > 0 
+            ? t.participantIds 
+            : partners.map(p => p.id);
+          const perPerson = amt / participants.length;
+
+          participants.forEach(pid => {
+            if (stats[pid]) {
+              stats[pid].totalShareBorne += perPerson;
+            }
+          });
+        } else if (t.splitMode === 'custom' && t.splits) {
+          Object.entries(t.splits).forEach(([pid, share]) => {
+            if (stats[pid]) {
+              stats[pid].totalShareBorne += parseFloat(share) || 0;
+            }
+          });
+        }
       }
     } 
     else if (t.type === 'settlement') {

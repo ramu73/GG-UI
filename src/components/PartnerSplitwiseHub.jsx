@@ -254,7 +254,7 @@ export default function PartnerSplitwiseHub() {
     setModalType(type);
     setFormTitle('');
     setFormAmount('');
-    setFormPaidBy(partners[0]?.id || '');
+    setFormPaidBy(type === 'expense' ? 'pool' : (partners[0]?.id || ''));
     setFormReceiverId(partners.length > 1 ? partners[1]?.id : partners[0]?.id || '');
     setFormCategory(type === 'investment' ? 'seed_capital' : 'seeds');
     setFormNotes('');
@@ -396,7 +396,9 @@ export default function PartnerSplitwiseHub() {
 
     const headers = ['Transaction ID', 'Date', 'Type', 'Title', 'Amount (INR)', 'Paid By', 'Receiver (if settlement)', 'Category', 'Notes'];
     const rows = transactions.map(t => {
-      const payer = partners.find(p => p.id === (t.paidBy || t.payerId))?.name || t.paidBy;
+      const payer = t.paidBy === 'pool'
+        ? 'Capital Pool'
+        : (partners.find(p => p.id === (t.paidBy || t.payerId))?.name || t.paidBy);
       const receiver = t.receiverId ? (partners.find(p => p.id === t.receiverId)?.name || t.receiverId) : '-';
       return [
         t.id,
@@ -911,7 +913,9 @@ export default function PartnerSplitwiseHub() {
             <tbody>
               {filteredTransactions.length > 0 ? (
                 filteredTransactions.map(t => {
-                  const payer = partners.find(p => p.id === (t.paidBy || t.payerId))?.name || t.paidBy;
+                  const payer = t.paidBy === 'pool'
+                    ? '🏦 Capital Pool'
+                    : (partners.find(p => p.id === (t.paidBy || t.payerId))?.name || t.paidBy);
                   const receiver = t.receiverId ? (partners.find(p => p.id === t.receiverId)?.name || t.receiverId) : null;
                   
                   return (
@@ -1058,7 +1062,10 @@ export default function PartnerSplitwiseHub() {
               <button 
                 type="button" 
                 className={`modal-type-btn ${modalType === 'expense' ? 'active' : ''}`}
-                onClick={() => setModalType('expense')}
+                onClick={() => {
+                  setModalType('expense');
+                  setFormPaidBy('pool');
+                }}
               >
                 <span>🧾 Shared Expense</span>
                 <small style={{ opacity: 0.8 }}>Split {partners.length} ways</small>
@@ -1067,7 +1074,10 @@ export default function PartnerSplitwiseHub() {
               <button 
                 type="button" 
                 className={`modal-type-btn ${modalType === 'investment' ? 'active' : ''}`}
-                onClick={() => setModalType('investment')}
+                onClick={() => {
+                  setModalType('investment');
+                  if (formPaidBy === 'pool') setFormPaidBy(partners[0]?.id || '');
+                }}
               >
                 <span>🏦 Capital Investment</span>
                 <small style={{ opacity: 0.8 }}>Add to Pool</small>
@@ -1076,7 +1086,10 @@ export default function PartnerSplitwiseHub() {
               <button 
                 type="button" 
                 className={`modal-type-btn ${modalType === 'settlement' ? 'active' : ''}`}
-                onClick={() => setModalType('settlement')}
+                onClick={() => {
+                  setModalType('settlement');
+                  if (formPaidBy === 'pool') setFormPaidBy(partners[0]?.id || '');
+                }}
               >
                 <span>⚖️ Debt Settlement</span>
                 <small style={{ opacity: 0.8 }}>Pay Partner</small>
@@ -1139,8 +1152,13 @@ export default function PartnerSplitwiseHub() {
                   value={formPaidBy}
                   onChange={(e) => setFormPaidBy(e.target.value)}
                 >
+                  {modalType === 'expense' && (
+                    <option value="pool">🏦 Paid from Capital Pool / Cash Reserve</option>
+                  )}
                   {partners.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                    <option key={p.id} value={p.id}>
+                      {p.name} {modalType === 'expense' ? '(Out of Personal Pocket)' : ''}
+                    </option>
                   ))}
                 </select>
               </div>
