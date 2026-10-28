@@ -3,44 +3,70 @@ import sqlite3
 import json
 import uuid
 import tempfile
+import urllib.request
+import urllib.parse
 from datetime import datetime
 from typing import List, Optional, Dict, Any
+
+# ==================== CONFIGURATION & SUPABASE ====================
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://nqbokydddszqwzckuokr.supabase.co").rstrip("/")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_RKUoivjb34NmSuy176C0ag_8yKu8DOz")
+USE_SUPABASE = bool(SUPABASE_URL and SUPABASE_KEY)
+
+def _supabase_request(endpoint: str, method: str = "GET", body: Any = None, prefer: Optional[str] = None) -> Optional[Any]:
+    """
+    Executes a direct HTTPS REST request to Supabase PostgREST.
+    Returns parsed JSON if successful, or None on failure (triggering SQLite fallback).
+    """
+    if not USE_SUPABASE:
+        return None
+
+    url = f"{SUPABASE_URL}/rest/v1/{endpoint.lstrip('/')}"
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    if prefer:
+        headers["Prefer"] = prefer
+
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as res:
+            res_body = res.read().decode("utf-8")
+            if res_body and res_body.strip():
+                return json.loads(res_body)
+            return []
+    except Exception as e:
+        print(f"Notice: Supabase call to '{endpoint}' failed ({e}). Falling back to local SQLite.")
+        return None
+
+# ==================== SQLITE LOCAL FALLBACK ====================
 
 _in_memory_conn = None
 
 def get_db_path() -> str:
-    """
-    Determines a guaranteed writable path for SQLite database.
-    Compatible with Vercel Serverless, AWS Lambda, Docker, and Local Dev.
-    """
-    # 1. Explicit environment variable override
+    """Determines writable SQLite path for local fallback."""
     env_path = os.environ.get("SQLITE_DB_PATH")
     if env_path:
         return env_path
 
-    # 2. Vercel & AWS Lambda Serverless environments:
-    # On Vercel, the application root (/var/task) is strictly READ-ONLY.
-    # The only writable directory is /tmp (tempfile.gettempdir()).
     if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
         return os.path.join(tempfile.gettempdir(), "godavari_partners.db")
 
-    # 3. Local Development: attempt local data directory first
     try:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         data_dir = os.path.join(base_dir, "data")
         os.makedirs(data_dir, exist_ok=True)
-        # Test write permission
-        test_file = os.path.join(data_dir, ".perm_test")
-        with open(test_file, "w") as f:
-            f.write("1")
-        os.remove(test_file)
         return os.path.join(data_dir, "godavari_partners.db")
     except Exception:
-        # Fallback to system temp folder if local folder is read-only
         return os.path.join(tempfile.gettempdir(), "godavari_partners.db")
 
 def _execute_schema_creation(conn: sqlite3.Connection):
-    """Creates tables if they do not exist."""
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS partners (
@@ -74,36 +100,65 @@ def _execute_schema_creation(conn: sqlite3.Connection):
     conn.commit()
 
 def get_connection() -> sqlite3.Connection:
-    """
-    Returns an open SQLite database connection with Row factory.
-    Gracefully falls back to shared in-memory database if file I/O fails.
-    """
     global _in_memory_conn
     db_path = get_db_path()
-
     try:
         conn = sqlite3.connect(db_path, timeout=10)
         conn.row_factory = sqlite3.Row
         _execute_schema_creation(conn)
         return conn
     except Exception as e:
-        print(f"Warning: Could not connect to SQLite file at '{db_path}': {e}. Using in-memory fallback.")
         if _in_memory_conn is None:
             _in_memory_conn = sqlite3.connect(":memory:", check_same_thread=False)
             _in_memory_conn.row_factory = sqlite3.Row
             _execute_schema_creation(_in_memory_conn)
         return _in_memory_conn
 
-# Initialize schema safely on module load
+# Initialize local schema safely
 try:
     with get_connection() as _init_c:
         pass
 except Exception as _init_err:
-    print(f"Notice: Initial schema check deferred: {_init_err}")
+    pass
+
+# ==================== TRANSACTION DATA NORMALIZATION ====================
+
+def _format_tx(d: Dict[str, Any]) -> Dict[str, Any]:
+    """Ensures consistent camelCase output for transactions."""
+    item = dict(d)
+    p_ids = item.get("participant_ids") if item.get("participant_ids") is not None else item.get("participantIds", [])
+    if isinstance(p_ids, str):
+        try:
+            p_ids = json.loads(p_ids)
+        except Exception:
+            p_ids = []
+    item["participantIds"] = p_ids or []
+
+    splits = item.get("splits_json") if item.get("splits_json") is not None else item.get("splits", {})
+    if isinstance(splits, str):
+        try:
+            splits = json.loads(splits)
+        except Exception:
+            splits = {}
+    item["splits"] = splits or {}
+
+    item["paidBy"] = item.pop("paid_by", item.get("paidBy", ""))
+    item["payerId"] = item.pop("payer_id", item.get("payerId", ""))
+    item["receiverId"] = item.pop("receiver_id", item.get("receiverId", ""))
+    item["splitMode"] = item.pop("split_mode", item.get("splitMode", "equal"))
+    item.pop("participant_ids", None)
+    item.pop("splits_json", None)
+    return item
 
 # ==================== PARTNER OPERATIONS ====================
 
 def get_all_partners() -> List[Dict[str, Any]]:
+    # 1. Try Supabase
+    res = _supabase_request("partners?select=*&order=created_at.asc")
+    if res is not None:
+        return res
+
+    # 2. SQLite Fallback
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM partners ORDER BY created_at ASC")
@@ -111,6 +166,12 @@ def get_all_partners() -> List[Dict[str, Any]]:
         return [dict(row) for row in rows]
 
 def get_partner_by_id(partner_id: str) -> Optional[Dict[str, Any]]:
+    # 1. Try Supabase
+    res = _supabase_request(f"partners?id=eq.{urllib.parse.quote(partner_id)}&select=*")
+    if res is not None:
+        return res[0] if res else None
+
+    # 2. SQLite Fallback
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM partners WHERE id = ?", (partner_id,))
@@ -126,15 +187,7 @@ def add_partner(data: Dict[str, Any]) -> Dict[str, Any]:
     color = data.get("color") or "#10b981"
     equity = float(data.get("initial_equity_target") or 33.33)
 
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT OR REPLACE INTO partners (id, name, email, phone, color, initial_equity_target, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (partner_id, name, email, phone, color, equity, now))
-        conn.commit()
-
-    return {
+    payload = {
         "id": partner_id,
         "name": name,
         "email": email,
@@ -144,74 +197,134 @@ def add_partner(data: Dict[str, Any]) -> Dict[str, Any]:
         "created_at": now
     }
 
+    # 1. Try Supabase
+    res = _supabase_request("partners", method="POST", body=payload, prefer="resolution=merge-duplicates,return=representation")
+    if res is not None and res:
+        return res[0]
+
+    # 2. SQLite Fallback
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO partners (id, name, email, phone, color, initial_equity_target, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (partner_id, name, email, phone, color, equity, now))
+        conn.commit()
+
+    return payload
+
 def update_partner(partner_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     existing = get_partner_by_id(partner_id)
     if not existing:
         data["id"] = partner_id
         return add_partner(data)
 
-    new_name = data.get("name") if data.get("name") is not None else existing["name"]
-    new_email = data.get("email") if data.get("email") is not None else existing["email"]
-    new_phone = data.get("phone") if data.get("phone") is not None else existing["phone"]
-    new_color = data.get("color") if data.get("color") is not None else existing["color"]
-    new_target = data.get("initial_equity_target") if data.get("initial_equity_target") is not None else existing["initial_equity_target"]
+    update_payload = {
+        "name": data.get("name", existing["name"]),
+        "email": data.get("email", existing["email"]),
+        "phone": data.get("phone", existing["phone"]),
+        "color": data.get("color", existing["color"]),
+        "initial_equity_target": float(data.get("initial_equity_target") if data.get("initial_equity_target") is not None else existing["initial_equity_target"])
+    }
 
+    # 1. Try Supabase
+    res = _supabase_request(
+        f"partners?id=eq.{urllib.parse.quote(partner_id)}",
+        method="PATCH",
+        body=update_payload,
+        prefer="return=representation"
+    )
+    if res is not None and res:
+        return res[0]
+
+    # 2. SQLite Fallback
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE partners 
             SET name = ?, email = ?, phone = ?, color = ?, initial_equity_target = ?
             WHERE id = ?
-        """, (new_name, new_email, new_phone, new_color, float(new_target), partner_id))
+        """, (
+            update_payload["name"],
+            update_payload["email"],
+            update_payload["phone"],
+            update_payload["color"],
+            update_payload["initial_equity_target"],
+            partner_id
+        ))
         conn.commit()
 
     return get_partner_by_id(partner_id)
 
 def delete_partner(partner_id: str) -> bool:
+    # 1. Try Supabase
+    res = _supabase_request(f"partners?id=eq.{urllib.parse.quote(partner_id)}", method="DELETE")
+    
+    # Also delete in local SQLite
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM partners WHERE id = ?", (partner_id,))
         conn.commit()
-        return cursor.rowcount > 0
+    return True
 
 # ==================== TRANSACTION OPERATIONS ====================
 
 def get_all_transactions() -> List[Dict[str, Any]]:
+    # 1. Try Supabase
+    res = _supabase_request("partner_transactions?select=*&order=date.desc,created_at.desc")
+    if res is not None:
+        return [_format_tx(r) for r in res]
+
+    # 2. SQLite Fallback
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM partner_transactions ORDER BY date DESC, created_at DESC")
         rows = cursor.fetchall()
+        return [_format_tx(dict(r)) for r in rows]
 
-        result = []
-        for r in rows:
-            d = dict(r)
-            try:
-                d["participantIds"] = json.loads(d.get("participant_ids") or "[]")
-            except Exception:
-                d["participantIds"] = []
+def get_transaction_by_id(tx_id: str) -> Optional[Dict[str, Any]]:
+    # 1. Try Supabase
+    res = _supabase_request(f"partner_transactions?id=eq.{urllib.parse.quote(tx_id)}&select=*")
+    if res is not None:
+        return _format_tx(res[0]) if res else None
 
-            try:
-                d["splits"] = json.loads(d.get("splits_json") or "{}")
-            except Exception:
-                d["splits"] = {}
-
-            d["paidBy"] = d.pop("paid_by", "")
-            d["payerId"] = d.pop("payer_id", "")
-            d["receiverId"] = d.pop("receiver_id", "")
-            d["splitMode"] = d.pop("split_mode", "equal")
-            d.pop("participant_ids", None)
-            d.pop("splits_json", None)
-            result.append(d)
-
-        return result
+    # 2. SQLite Fallback
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM partner_transactions WHERE id = ?", (tx_id,))
+        row = cursor.fetchone()
+        return _format_tx(dict(row)) if row else None
 
 def add_transaction(data: Dict[str, Any]) -> Dict[str, Any]:
     tx_id = data.get("id") or f"tx-{int(datetime.utcnow().timestamp() * 1000)}"
     now = datetime.utcnow().isoformat() + "Z"
 
-    participant_ids_json = json.dumps(data.get("participantIds") or [])
-    splits_json = json.dumps(data.get("splits") or {})
+    p_ids = data.get("participantIds") or []
+    splits = data.get("splits") or {}
 
+    payload = {
+        "id": tx_id,
+        "type": data.get("type", "expense"),
+        "date": data.get("date", datetime.utcnow().strftime("%Y-%m-%d")),
+        "title": (data.get("title") or "").strip(),
+        "amount": float(data.get("amount") or 0),
+        "paid_by": data.get("paidBy", ""),
+        "payer_id": data.get("payerId", ""),
+        "receiver_id": data.get("receiverId", ""),
+        "category": data.get("category", ""),
+        "split_mode": data.get("splitMode", "equal"),
+        "participant_ids": p_ids,
+        "splits_json": splits,
+        "notes": data.get("notes", ""),
+        "created_at": now
+    }
+
+    # 1. Try Supabase
+    res = _supabase_request("partner_transactions", method="POST", body=payload, prefer="return=representation")
+    if res is not None and res:
+        return _format_tx(res[0])
+
+    # 2. SQLite Fallback
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -222,84 +335,59 @@ def add_transaction(data: Dict[str, Any]) -> Dict[str, Any]:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             tx_id,
-            data.get("type", "expense"),
-            data.get("date", datetime.utcnow().strftime("%Y-%m-%d")),
-            (data.get("title") or "").strip(),
-            float(data.get("amount") or 0),
-            data.get("paidBy", ""),
-            data.get("payerId", ""),
-            data.get("receiverId", ""),
-            data.get("category", ""),
-            data.get("splitMode", "equal"),
-            participant_ids_json,
-            splits_json,
-            data.get("notes", ""),
+            payload["type"],
+            payload["date"],
+            payload["title"],
+            payload["amount"],
+            payload["paid_by"],
+            payload["payer_id"],
+            payload["receiver_id"],
+            payload["category"],
+            payload["split_mode"],
+            json.dumps(p_ids),
+            json.dumps(splits),
+            payload["notes"],
             now
         ))
         conn.commit()
 
-    return {
-        "id": tx_id,
-        "type": data.get("type"),
-        "date": data.get("date"),
-        "title": data.get("title"),
-        "amount": float(data.get("amount") or 0),
-        "paidBy": data.get("paidBy", ""),
-        "payerId": data.get("payerId", ""),
-        "receiverId": data.get("receiverId", ""),
-        "category": data.get("category", ""),
-        "splitMode": data.get("splitMode", "equal"),
-        "participantIds": data.get("participantIds") or [],
-        "splits": data.get("splits") or {},
-        "notes": data.get("notes", ""),
-        "created_at": now
-    }
-
-def get_transaction_by_id(tx_id: str) -> Optional[Dict[str, Any]]:
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM partner_transactions WHERE id = ?", (tx_id,))
-        row = cursor.fetchone()
-        if not row:
-            return None
-        d = dict(row)
-        try:
-            d["participantIds"] = json.loads(d.get("participant_ids") or "[]")
-        except Exception:
-            d["participantIds"] = []
-        try:
-            d["splits"] = json.loads(d.get("splits_json") or "{}")
-        except Exception:
-            d["splits"] = {}
-        d["paidBy"] = d.pop("paid_by", "")
-        d["payerId"] = d.pop("payer_id", "")
-        d["receiverId"] = d.pop("receiver_id", "")
-        d["splitMode"] = d.pop("split_mode", "equal")
-        d.pop("participant_ids", None)
-        d.pop("splits_json", None)
-        return d
+    return _format_tx(payload)
 
 def update_transaction(tx_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     existing = get_transaction_by_id(tx_id)
     if not existing:
-        # Upsert: add as new transaction if not found
         data["id"] = tx_id
         return add_transaction(data)
 
-    t_type = data.get("type", existing["type"])
-    t_date = data.get("date", existing["date"])
-    t_title = (data.get("title") or existing["title"]).strip()
-    t_amount = float(data.get("amount") if data.get("amount") is not None else existing["amount"])
-    t_paid_by = data.get("paidBy", existing["paidBy"])
-    t_payer_id = data.get("payerId", existing["payerId"])
-    t_receiver_id = data.get("receiverId", existing["receiverId"])
-    t_category = data.get("category", existing["category"])
-    t_split_mode = data.get("splitMode", existing["splitMode"])
-    t_notes = data.get("notes", existing["notes"])
+    p_ids = data.get("participantIds") if data.get("participantIds") is not None else existing.get("participantIds", [])
+    splits = data.get("splits") if data.get("splits") is not None else existing.get("splits", {})
 
-    participant_ids = data.get("participantIds") if data.get("participantIds") is not None else existing["participantIds"]
-    splits = data.get("splits") if data.get("splits") is not None else existing["splits"]
+    update_payload = {
+        "type": data.get("type", existing.get("type")),
+        "date": data.get("date", existing.get("date")),
+        "title": (data.get("title") or existing.get("title")).strip(),
+        "amount": float(data.get("amount") if data.get("amount") is not None else existing.get("amount")),
+        "paid_by": data.get("paidBy", existing.get("paidBy")),
+        "payer_id": data.get("payerId", existing.get("payerId")),
+        "receiver_id": data.get("receiverId", existing.get("receiverId")),
+        "category": data.get("category", existing.get("category")),
+        "split_mode": data.get("splitMode", existing.get("splitMode")),
+        "participant_ids": p_ids,
+        "splits_json": splits,
+        "notes": data.get("notes", existing.get("notes"))
+    }
 
+    # 1. Try Supabase
+    res = _supabase_request(
+        f"partner_transactions?id=eq.{urllib.parse.quote(tx_id)}",
+        method="PATCH",
+        body=update_payload,
+        prefer="return=representation"
+    )
+    if res is not None and res:
+        return _format_tx(res[0])
+
+    # 2. SQLite Fallback
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -308,27 +396,34 @@ def update_transaction(tx_id: str, data: Dict[str, Any]) -> Optional[Dict[str, A
                 category = ?, split_mode = ?, participant_ids = ?, splits_json = ?, notes = ?
             WHERE id = ?
         """, (
-            t_type, t_date, t_title, t_amount, t_paid_by, t_payer_id, t_receiver_id,
-            t_category, t_split_mode, json.dumps(participant_ids or []), json.dumps(splits or {}),
-            t_notes, tx_id
+            update_payload["type"], update_payload["date"], update_payload["title"], update_payload["amount"],
+            update_payload["paid_by"], update_payload["payer_id"], update_payload["receiver_id"],
+            update_payload["category"], update_payload["split_mode"], json.dumps(p_ids),
+            json.dumps(splits), update_payload["notes"], tx_id
         ))
         conn.commit()
 
     return get_transaction_by_id(tx_id)
 
 def delete_transaction(tx_id: str) -> bool:
+    # 1. Try Supabase
+    _supabase_request(f"partner_transactions?id=eq.{urllib.parse.quote(tx_id)}", method="DELETE")
+    
+    # 2. SQLite
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM partner_transactions WHERE id = ?", (tx_id,))
         conn.commit()
-        # Always return True for idempotent deletion
-        return True
+    return True
 
 def clear_all_transactions() -> int:
+    # 1. Try Supabase
+    _supabase_request("partner_transactions?id=neq.null", method="DELETE")
+
+    # 2. SQLite
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM partner_transactions")
         deleted_count = cursor.rowcount
         conn.commit()
         return deleted_count
-
