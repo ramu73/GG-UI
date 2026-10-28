@@ -4,11 +4,7 @@
  * Net Balances, and Optimal Debt Simplification ("Who Owes Whom").
  */
 
-export const DEFAULT_PARTNERS = [
-  { id: 'p1', name: 'Partner 1', email: 'partner1@godavari.com', phone: '+91 98480 11221', color: '#10b981', initialEquityTarget: 33.33 },
-  { id: 'p2', name: 'Partner 2', email: 'partner2@godavari.com', phone: '+91 98480 22332', color: '#3b82f6', initialEquityTarget: 33.33 },
-  { id: 'p3', name: 'Partner 3', email: 'partner3@godavari.com', phone: '+91 98480 33443', color: '#8b5cf6', initialEquityTarget: 33.34 }
-];
+export const DEFAULT_PARTNERS = [];
 
 export const EXPENSE_CATEGORIES = [
   { id: 'seeds', label: 'Spawn & Seeds', icon: '🌱', color: '#16a34a' },

@@ -25,8 +25,7 @@ import {
   calculateSplitwiseSummary, 
   formatINR, 
   EXPENSE_CATEGORIES, 
-  INVESTMENT_CATEGORIES,
-  DEFAULT_PARTNERS 
+  INVESTMENT_CATEGORIES 
 } from '../utils/splitwiseEngine';
 import { 
   fetchPartnersFromDb,
@@ -123,43 +122,6 @@ export default function PartnerSplitwiseHub() {
   // Splitwise calculations
   const summary = calculateSplitwiseSummary(partners, transactions);
 
-  // Quick Init 3 Default Partners if database is brand new (0 partners)
-  const handleQuickInitPartners = async () => {
-    setIsSaving(true);
-    setDbError(null);
-    try {
-      const createdPartners = [];
-      for (const def of DEFAULT_PARTNERS) {
-        const res = await createPartnerInDb({
-          id: def.id,
-          name: def.name,
-          email: def.email,
-          phone: def.phone,
-          color: def.color,
-          initial_equity_target: def.initialEquityTarget
-        });
-        createdPartners.push(res);
-      }
-      setPartners(createdPartners);
-      if (createdPartners.length > 0) {
-        setFormPaidBy(createdPartners[0].id);
-        if (createdPartners.length > 1) {
-          setFormReceiverId(createdPartners[1].id);
-        }
-      }
-    } catch (err) {
-      setDbError({
-        action: 'Initialize Partner Profiles in DB',
-        message: err.message || 'Failed to save default partners to database.',
-        status: err.status || '500',
-        endpoint: err.endpoint || '/api/partners',
-        technicalDetails: err.technicalDetails || String(err),
-        timestamp: new Date().toLocaleTimeString('en-IN')
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   // Add a brand new partner to DB
   const handleCreateNewPartner = async (e) => {
@@ -681,14 +643,6 @@ export default function PartnerSplitwiseHub() {
             >
               <UserPlus size={16} />
               <span>+ Add Partner Profile</span>
-            </button>
-            <button 
-              type="button" 
-              className="btn-outline-action"
-              onClick={handleQuickInitPartners}
-              disabled={isSaving}
-            >
-              <span>⚡ Quick-Create 3 Partner Slots</span>
             </button>
           </div>
         </div>
