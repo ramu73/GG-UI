@@ -121,29 +121,40 @@ export function calculateSplitwiseSummary(partners, transactions) {
     s.investmentSharePercent = totalPoolInvested > 0 
       ? ((s.totalInvested / totalPoolInvested) * 100).toFixed(1) 
       : (100 / partners.length).toFixed(1);
+
+    // Total Overall Net Position (Capital + Out-of-pocket Expenses)
+    // Positive (> 0): Contributed more than fair share (Deserves money back to equalize)
+    // Negative (< 0): Contributed less than fair share (Must pay to reach equal 1/3)
+    s.netTotalBalance = Math.round((s.netExpenseBalance + s.netInvestmentBalance) * 100) / 100;
   });
 
-  // 4. Splitwise Minimal Debt Settlement Algorithm ("Who owes whom")
-  const simplifiedDebts = computeMinimalDebts(partners, stats);
+  // 4. Splitwise Minimal Debt Settlement Algorithm ("Who owes whom to make it 100% equal")
+  const simplifiedDebts = computeMinimalDebts(partners, stats, 'netTotalBalance');
+  const capitalDebts = computeMinimalDebts(partners, stats, 'netInvestmentBalance');
+  const expenseDebts = computeMinimalDebts(partners, stats, 'netExpenseBalance');
 
   return {
     totalPoolInvested,
     totalExpenses,
     totalSettlements,
     cashPoolRemaining: totalPoolInvested - totalExpenses,
+    equalInvestmentTarget: totalPoolInvested / (partners.length || 1),
     partnerStats: Object.values(stats),
-    simplifiedDebts
+    simplifiedDebts,
+    capitalDebts,
+    expenseDebts
   };
 }
 
 /**
  * Greedy minimum cash-flow debt simplification algorithm
  */
-function computeMinimalDebts(partners, stats) {
+function computeMinimalDebts(partners, stats, balanceKey = 'netTotalBalance') {
   // Create working balances for each partner (rounded to 2 decimal places to avoid floating point drift)
   const balances = [];
   partners.forEach(p => {
-    const net = Math.round(stats[p.id].netExpenseBalance * 100) / 100;
+    const raw = stats[p.id][balanceKey] !== undefined ? stats[p.id][balanceKey] : stats[p.id].netExpenseBalance;
+    const net = Math.round(raw * 100) / 100;
     if (Math.abs(net) > 0.05) {
       balances.push({
         id: p.id,

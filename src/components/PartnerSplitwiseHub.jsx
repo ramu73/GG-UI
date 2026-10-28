@@ -715,7 +715,7 @@ export default function PartnerSplitwiseHub() {
           <div className="partner-cards-grid">
             {summary.partnerStats.map((st) => {
               const p = st.partner;
-              const net = Math.round(st.netExpenseBalance);
+              const net = Math.round(st.netTotalBalance !== undefined ? st.netTotalBalance : st.netExpenseBalance);
               const isCreditor = net > 0;
               const isDebtor = net < 0;
 
@@ -733,17 +733,17 @@ export default function PartnerSplitwiseHub() {
                     </div>
 
                     <div className={`partner-status-badge ${isCreditor ? 'owed' : isDebtor ? 'owes' : 'settled'}`}>
-                      {isCreditor && `+${formatINR(net)} get back`}
-                      {isDebtor && `-${formatINR(Math.abs(net))} owes`}
-                      {!isCreditor && !isDebtor && `✓ Settled Up`}
+                      {isCreditor && `+${formatINR(net)} overpaid (receives)`}
+                      {isDebtor && `-${formatINR(Math.abs(net))} pending to 1/3`}
+                      {!isCreditor && !isDebtor && `✓ Exactly Equal (1/3)`}
                     </div>
                   </div>
 
                   {/* Capital Contribution & Equity */}
                   <div className="capital-equity-row">
                     <div className="equity-bar-meta">
-                      <span>Capital Invested: <strong>{formatINR(st.totalInvested)}</strong></span>
-                      <span><strong>{st.investmentSharePercent}%</strong> Equity</span>
+                      <span>Capital: <strong>{formatINR(st.totalInvested)}</strong> ({st.investmentSharePercent}%)</span>
+                      <span>Target: <strong>{formatINR(summary.equalInvestmentTarget)}</strong> (33.3%)</span>
                     </div>
                     <div className="equity-bar-track">
                       <div 
@@ -789,10 +789,10 @@ export default function PartnerSplitwiseHub() {
         <div className="settlement-card-header">
           <h3>
             <ArrowLeftRight size={20} color="#15803d" />
-            <span>Optimal Settlement Transfers ("Who Pays Whom")</span>
+            <span>Equalization Transfers ("Who Pays Whom to Make Everything 1/3 Equal")</span>
           </h3>
           <span style={{ fontSize: '0.84rem', color: '#166534', fontWeight: 600 }}>
-            Simplified to minimal transactions
+            {summary.equalInvestmentTarget ? `Target: ${formatINR(summary.equalInvestmentTarget)} each` : 'Minimal settlement steps'}
           </span>
         </div>
 
