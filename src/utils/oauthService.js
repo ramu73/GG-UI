@@ -38,14 +38,7 @@ export function decodeJwt(token) {
  */
 export function isEmailAdmin(email) {
   if (!email) return false;
-  const clean = email.toLowerCase().trim();
-  return (
-    ADMIN_EMAILS.includes(clean) ||
-    clean.endsWith('@godavarigrown.com') ||
-    clean.startsWith('admin@') ||
-    clean.startsWith('survey.admin@') ||
-    clean === 'admin'
-  );
+  return ADMIN_EMAILS.includes(email.toLowerCase().trim());
 }
 
 /**
@@ -120,7 +113,7 @@ export const DEMO_PROFILES = {
     name: 'R. Satyanarayana (Admin)',
     email: 'admin@godavarigrown.com',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-    provider: 'google',
+    provider: ' ',
     role: 'admin',
     title: 'Lead Agri-Intelligence Director'
   },

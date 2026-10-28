@@ -129,7 +129,7 @@ def add_partner(data: Dict[str, Any]) -> Dict[str, Any]:
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO partners (id, name, email, phone, color, initial_equity_target, created_at)
+            INSERT OR REPLACE INTO partners (id, name, email, phone, color, initial_equity_target, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """, (partner_id, name, email, phone, color, equity, now))
         conn.commit()
@@ -147,7 +147,8 @@ def add_partner(data: Dict[str, Any]) -> Dict[str, Any]:
 def update_partner(partner_id: str, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     existing = get_partner_by_id(partner_id)
     if not existing:
-        return None
+        data["id"] = partner_id
+        return add_partner(data)
 
     new_name = data.get("name") if data.get("name") is not None else existing["name"]
     new_email = data.get("email") if data.get("email") is not None else existing["email"]
