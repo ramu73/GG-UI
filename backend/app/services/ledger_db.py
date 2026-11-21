@@ -42,7 +42,16 @@ def _supabase_request(endpoint: str, method: str = "GET", body: Any = None, pref
                 return json.loads(res_body)
             return []
     except Exception as e:
-        print(f"Notice: Supabase call to '{endpoint}' failed ({e}). Falling back to local SQLite.")
+        err_msg = str(e)
+        print(f"Notice: Supabase call to '{endpoint}' failed ({err_msg}).")
+        # On Vercel, /tmp is ephemeral and has no persistent data.
+        # If Supabase was configured and failed (e.g. paused free tier or DNS failure),
+        # raising an exception notifies the frontend instead of falsely showing 0 records.
+        if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+            raise RuntimeError(
+                f"Supabase database unreachable or paused ({err_msg}). "
+                "If your Supabase project was inactive for over 7 days, please click 'Restore project' in your Supabase dashboard."
+            )
         return None
 
 # ==================== SQLITE LOCAL FALLBACK ====================
