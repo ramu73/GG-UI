@@ -347,7 +347,7 @@ export async function deleteTransactionFromDb(transactionId) {
  * Clear all transactions from Database
  */
 export async function clearAllTransactionsFromDb() {
-  const endpoint = `${API_BASE_URL}/transactions`;
+  const endpoint = `${API_BASE_URL}/transactions?confirm=true`;
   try {
     const res = await fetch(endpoint, {
       method: 'DELETE',

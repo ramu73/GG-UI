@@ -237,10 +237,15 @@ async def list_surveys(
 
 
 @router.delete("")
-async def clear_surveys():
+async def clear_surveys(confirm: bool = False):
     """
-    Clears all survey records (useful to wipe demo data for production deployment).
+    Clears all survey records. Requires ?confirm=true to prevent accidental wiping.
     """
+    if not confirm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirmation required to clear surveys. Pass ?confirm=true."
+        )
     global SURVEYS_DB
     SURVEYS_DB.clear()
     return {"status": "success", "message": "All survey records cleared."}

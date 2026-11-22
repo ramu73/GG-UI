@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Request, Response, Query
+import hmac
+import hashlib
+from fastapi import APIRouter, Request, Response, Query, HTTPException, status
 from app.config import settings
 from app.services.whatsapp_service import whatsapp_service
 from app.services.rag_service import rag_service
@@ -23,8 +25,24 @@ async def handle_whatsapp_incoming(request: Request):
     """
     Receives incoming WhatsApp messages from customers, retrieves RAG context,
     and automatically responds on WhatsApp.
+    Validates Meta X-Hub-Signature-256 HMAC when WHATSAPP_APP_SECRET is configured.
     """
     try:
+        raw_body = await request.body()
+
+        # Cryptographic signature validation
+        if settings.WHATSAPP_APP_SECRET:
+            signature = request.headers.get("X-Hub-Signature-256", "")
+            if not signature.startswith("sha256="):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing or invalid signature format.")
+            expected_sig = "sha256=" + hmac.new(
+                settings.WHATSAPP_APP_SECRET.encode(),
+                raw_body,
+                hashlib.sha256
+            ).hexdigest()
+            if not hmac.compare_digest(signature, expected_sig):
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Webhook signature mismatch.")
+
         body = await request.json()
         parsed = whatsapp_service.parse_incoming_webhook(body)
 

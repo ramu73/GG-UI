@@ -10,9 +10,15 @@ async def handle_chat_message(request: ChatRequest):
     RAG-powered conversational endpoint for the Godavari Grown website chatbot.
     Retrieves grounded context from the knowledge base and generates an accurate answer.
     """
+    msg = (request.message or "").strip()
+    if not msg:
+        raise HTTPException(status_code=400, detail="Message cannot be empty.")
+    if len(msg) > 1000:
+        raise HTTPException(status_code=400, detail="Message exceeds maximum allowed length of 1000 characters.")
+
     try:
         result = await rag_service.generate_answer(
-            query=request.message,
+            query=msg,
             language=request.language
         )
         return ChatResponse(

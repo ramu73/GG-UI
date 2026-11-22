@@ -100,7 +100,7 @@ export function AuthProvider({ children, onNavigateView }) {
       const isValidAdminUser = lowerUser === 'admin' || 
                                lowerUser === 'admin@godavarigrown.com' ||
                                lowerUser === 'godavari';
-      const isValidAdminPass = cleanPass === ADMIN_PASSCODE || cleanPass === 'godavari2026';
+      const isValidAdminPass = cleanPass === ADMIN_PASSCODE;
 
       if (isValidAdminUser && isValidAdminPass) {
         const adminUser = {

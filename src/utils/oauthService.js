@@ -5,7 +5,7 @@
 
 export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 export const FACEBOOK_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID || '';
-export const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || 'godavari2026';
+export const ADMIN_PASSCODE = import.meta.env.VITE_ADMIN_PASSCODE || '';
 export const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || 'admin@godavarigrown.com,survey.admin@godavarigrown.com')
   .toLowerCase()
   .split(',')

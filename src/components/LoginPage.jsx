@@ -26,9 +26,9 @@ export default function LoginPage({ onBackToStorefront, isAdminPortal = false })
     loginWithFacebook 
   } = useAuth();
 
-  // Default credentials: Admin credentials are pre-filled by default. Customer fields start blank.
-  const [username, setUsername] = useState(isAdminPortal ? 'admin' : '');
-  const [password, setPassword] = useState(isAdminPortal ? 'godavari2026' : '');
+  // Credentials state: Customer & Admin fields start clean (no hardcoded password auto-fill)
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -36,13 +36,8 @@ export default function LoginPage({ onBackToStorefront, isAdminPortal = false })
   const [oauthModal, setOauthModal] = useState({ isOpen: false, provider: 'google' });
 
   useEffect(() => {
-    if (isAdminPortal) {
-      setUsername('admin');
-      setPassword('godavari2026');
-    } else {
-      setUsername('');
-      setPassword('');
-    }
+    setUsername('');
+    setPassword('');
   }, [isAdminPortal]);
 
   const googleBtnRef = useRef(null);
@@ -321,7 +316,7 @@ export default function LoginPage({ onBackToStorefront, isAdminPortal = false })
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   className="realtime-input"
-                  placeholder={isAdminPortal ? 'godavari2026' : 'Enter password'}
+                  placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="current-password"

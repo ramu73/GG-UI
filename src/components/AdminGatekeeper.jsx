@@ -25,8 +25,8 @@ export default function AdminGatekeeper({ onBackToStorefront, requestedView = 's
     elevateToAdmin 
   } = useAuth();
 
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('godavari2026');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
@@ -122,9 +122,7 @@ export default function AdminGatekeeper({ onBackToStorefront, requestedView = 's
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '-4px' }}>
-            <span>Default: <code>admin</code> / <code>godavari2026</code></span>
-          </div>
+
 
           <button type="submit" className="btn-auth-primary" style={{ width: '100%' }}>
             <LogIn size={16} />

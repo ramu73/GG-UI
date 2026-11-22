@@ -43,10 +43,16 @@ async def create_transaction(tx: PartnerTransactionCreate):
         )
 
 @router.delete("/transactions")
-async def clear_all_transactions():
+async def clear_all_transactions(confirm: bool = False):
     """
     Wipes all transactions from the database (clean blank slate).
+    Requires explicit confirmation (?confirm=true) to prevent accidental mass data loss.
     """
+    if not confirm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirmation required to clear transactions. Pass query parameter ?confirm=true."
+        )
     try:
         count = ledger_db.clear_all_transactions()
         return {"status": "success", "message": f"All {count} transactions cleared from database."}

@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     WHATSAPP_ACCESS_TOKEN: str = ""
     WHATSAPP_VERIFY_TOKEN: str = "godavari_grown_verify_secret_2026"
     WHATSAPP_BUSINESS_PHONE: str = "+919876543210"
+    WHATSAPP_APP_SECRET: str = ""
     
     # LLM / Gemini / OpenAI
     GEMINI_API_KEY: str = ""

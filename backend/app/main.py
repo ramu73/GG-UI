@@ -9,12 +9,25 @@ app = FastAPI(
     description="Backend service for Godavari Grown: RAG AI Chatbot, Product Catalog, WhatsApp API, Market Intelligence, and Partner Splitwise Ledger"
 )
 
-# CORS Middleware
+# CORS Middleware: Explicitly allow trusted origins and Vercel deployments (fixing wildcard with credentials)
+allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "https://godavarigrown.com",
+    "https://www.godavarigrown.com",
+    "https://gg-ui-phi.vercel.app"
+]
+for o in settings.CORS_ORIGINS:
+    if o and o not in allowed_origins:
+        allowed_origins.append(o)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Open for development and frontend dev servers
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
 )
 
